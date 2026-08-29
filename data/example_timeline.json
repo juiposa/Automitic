@@ -1,0 +1,22 @@
+{
+  "timestamp": "",
+  "instance": "",
+  "pull_time": 0,
+  "player_characters": [
+    {
+
+    }
+  ],
+  "enemies": [
+    {
+
+    }
+  ],
+  "events": [
+    {
+      "time": 0,
+      "type": "damage"
+
+    }
+  ]
+}

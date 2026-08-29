@@ -1,0 +1,2491 @@
+package fflogs
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+)
+
+type ArchonViewModels struct {
+	User                          *string `json:"user,omitempty"`
+	UserFromDesktopClientToken    *string `json:"userFromDesktopClientToken,omitempty"`
+	GoogleAnalytics               *string `json:"googleAnalytics,omitempty"`
+	Game                          *string `json:"game,omitempty"`
+	Translations                  *string `json:"translations,omitempty"`
+	Header                        *string `json:"header,omitempty"`
+	HeaderTitle                   *string `json:"headerTitle,omitempty"`
+	Footer                        *string `json:"footer,omitempty"`
+	IndexPage                     *string `json:"indexPage,omitempty"`
+	SignInPage                    *string `json:"signInPage,omitempty"`
+	SignOutPage                   *string `json:"signOutPage,omitempty"`
+	AuthErrorPage                 *string `json:"authErrorPage,omitempty"`
+	AccountPage                   *string `json:"accountPage,omitempty"`
+	GamePage                      *string `json:"gamePage,omitempty"`
+	ContactPage                   *string `json:"contactPage,omitempty"`
+	DownloadPage                  *string `json:"downloadPage,omitempty"`
+	PrivacyPolicyPage             *string `json:"privacyPolicyPage,omitempty"`
+	VideoTermsOfServicePage       *string `json:"videoTermsOfServicePage,omitempty"`
+	AboutPage                     *string `json:"aboutPage,omitempty"`
+	AnnouncementPage              *string `json:"announcementPage,omitempty"`
+	GameSlugs                     *string `json:"gameSlugs,omitempty"`
+	BuildsZonePageSlugs           *string `json:"buildsZonePageSlugs,omitempty"`
+	BuildsZonePage                *string `json:"buildsZonePage,omitempty"`
+	BuildsSpecPageSlugs           *string `json:"buildsSpecPageSlugs,omitempty"`
+	BuildsSpecPage                *string `json:"buildsSpecPage,omitempty"`
+	BuildsClassesAndSpecsPage     *string `json:"buildsClassesAndSpecsPage,omitempty"`
+	Ability                       *string `json:"ability,omitempty"`
+	ArticleCategory               *string `json:"articleCategory,omitempty"`
+	ArticleCategories             *string `json:"articleCategories,omitempty"`
+	ArticleSlugs                  *string `json:"articleSlugs,omitempty"`
+	Article                       *string `json:"article,omitempty"`
+	CmsNavigation                 *string `json:"cmsNavigation,omitempty"`
+	PageOfArticlePreviews         *string `json:"pageOfArticlePreviews,omitempty"`
+	Snippets                      *string `json:"snippets,omitempty"`
+	ArticleIndexPage              *string `json:"articleIndexPage,omitempty"`
+	PlaywireAds                   *string `json:"playwireAds,omitempty"`
+	AdPlacements                  *string `json:"adPlacements,omitempty"`
+	ReportPage                    *string `json:"reportPage,omitempty"`
+	FightPage                     *string `json:"fightPage,omitempty"`
+	FightPageContent              *string `json:"fightPageContent,omitempty"`
+	CharacterIndexPage            *string `json:"characterIndexPage,omitempty"`
+	CharacterPage                 *string `json:"characterPage,omitempty"`
+	CharacterPageContent          *string `json:"characterPageContent,omitempty"`
+	CharacterCustomizationOptions *string `json:"characterCustomizationOptions,omitempty"`
+	CharacterEncounterRankings    *string `json:"characterEncounterRankings,omitempty"`
+}
+
+// A bracket description for a given raid zone. Brackets have a minimum value, maximum value, and a bucket that can be used to establish all of the possible brackets. The type field indicates what the brackets represent, e.g., item levels or game patches, etc.
+type Bracket struct {
+	// An integer representing the minimum value used by bracket number 1, etc.
+	Min float64 `json:"min"`
+	// An integer representing the value used by bracket N when there are a total of N brackets, etc.
+	Max float64 `json:"max"`
+	// A float representing the value to increment when moving from bracket 1 to bracket N, etc.
+	Bucket float64 `json:"bucket"`
+	// The localized name of the bracket type.
+	Type *string `json:"type,omitempty"`
+}
+
+// A player character. Characters can earn individual rankings and appear in reports.
+type Character struct {
+	// The canonical ID of the character. If a character renames or transfers, then the canonical id can be used to identify the most recent version of the character.
+	CanonicalID int64 `json:"canonicalID"`
+	// Whether this character is claimed by the current user. Only accessible if accessed via the user API with the "view-user-profile" scope.
+	Claimed *bool `json:"claimed,omitempty"`
+	// Encounter rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	EncounterRankings *string `json:"encounterRankings,omitempty"`
+	// Cached game data such as gear for the character. This data was fetched from the appropriate source (Blizzard APIs for WoW, Lodestone for FF). This call will only return a cached copy of the data if it exists already. It will not go out to Blizzard or Lodestone to fetch a new copy.
+	GameData *string `json:"gameData,omitempty"`
+	// The guild rank of the character in their primary guild. This is not the user rank on the site, but the rank according to the game data, e.g., a Warcraft guild rank or an FFXIV Free Company rank.
+	GuildRank int64 `json:"guildRank"`
+	// All guilds that the character belongs to.
+	Guilds []*Guild `json:"guilds,omitempty"`
+	// Whether or not the character has all its rankings hidden.
+	Hidden bool `json:"hidden"`
+	// The ID of the character.
+	ID int64 `json:"id"`
+	// The lodestone id of the character. This can be used to obtain the character information on the Lodestone.
+	LodestoneID int64 `json:"lodestoneID"`
+	// The name of the character.
+	Name string `json:"name"`
+	// Recent reports for the character.
+	RecentReports *ReportPagination `json:"recentReports,omitempty"`
+	// The server that the character belongs to.
+	Server *Server `json:"server"`
+	// Rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	ZoneRankings *string `json:"zoneRankings,omitempty"`
+}
+
+// The CharacterData object enables the retrieval of single characters or filtered collections of characters.
+type CharacterData struct {
+	// Obtain a specific character either by id or by name/server_slug/server_region.
+	Character *Character `json:"character,omitempty"`
+	// A collection of characters for a specific guild.
+	Characters *CharacterPagination `json:"characters,omitempty"`
+}
+
+type CharacterPagination struct {
+	// List of items on the current page
+	Data []*Character `json:"data,omitempty"`
+	// Number of total items selected by the query
+	Total int64 `json:"total"`
+	// Number of items returned per page
+	PerPage int64 `json:"per_page"`
+	// Current page of the cursor
+	CurrentPage int64 `json:"current_page"`
+	// Number of the first item returned
+	From *int64 `json:"from,omitempty"`
+	// Number of the last item returned
+	To *int64 `json:"to,omitempty"`
+	// The last page (number of pages)
+	LastPage int64 `json:"last_page"`
+	// Determines if cursor has more pages after the current page
+	HasMorePages bool `json:"has_more_pages"`
+}
+
+// A single difficulty for a given raid zone. Difficulties have an integer value representing the actual difficulty, a localized name that describes the difficulty level, and a list of valid sizes for the difficulty level.
+type Difficulty struct {
+	// An integer representing a specific difficulty level within a zone. For example, in World of Warcraft, this could be Mythic. In FF, it could be Savage, etc.
+	ID int64 `json:"id"`
+	// The localized name for the difficulty level.
+	Name string `json:"name"`
+	// A list of supported sizes for the difficulty level. An empty result means that the difficulty level has a flexible raid size.
+	Sizes []*int64 `json:"sizes,omitempty"`
+}
+
+// A single encounter for the game.
+type Encounter struct {
+	// The ID of the encounter.
+	ID int64 `json:"id"`
+	// The localized name of the encounter.
+	Name string `json:"name"`
+	// Player rankings information for a zone. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	CharacterRankings *string `json:"characterRankings,omitempty"`
+	// Fight rankings information for a zone. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	FightRankings *string `json:"fightRankings,omitempty"`
+	// The zone that this encounter is found in.
+	Zone *Zone `json:"zone"`
+}
+
+type EncounterPhases struct {
+	EncounterID int64 `json:"encounterID"`
+	// Whether the phases can be used to separate wipes in the report UI.
+	SeparatesWipes *bool `json:"separatesWipes,omitempty"`
+	// Phase metadata for all phases in this encounter.
+	Phases []*PhaseMetadata `json:"phases,omitempty"`
+}
+
+// A single expansion for the game.
+type Expansion struct {
+	// The ID of the expansion.
+	ID int64 `json:"id"`
+	// The localized name of the expansion.
+	Name string `json:"name"`
+	// The zones (e.g., raids and dungeons) supported for this expansion.
+	Zones []*Zone `json:"zones,omitempty"`
+}
+
+// A single ability for the game.
+type GameAbility struct {
+	// The ID of the ability.
+	ID int64 `json:"id"`
+	// The icon for the ability.
+	Icon *string `json:"icon,omitempty"`
+	// The localized name of the ability. Will be null if no localization information exists for the ability.
+	Name *string `json:"name,omitempty"`
+	// A description for the ability if it is available.
+	Description *string `json:"description,omitempty"`
+}
+
+type GameAbilityPagination struct {
+	// List of items on the current page
+	Data []*GameAbility `json:"data,omitempty"`
+	// Number of total items selected by the query
+	Total int64 `json:"total"`
+	// Number of items returned per page
+	PerPage int64 `json:"per_page"`
+	// Current page of the cursor
+	CurrentPage int64 `json:"current_page"`
+	// Number of the first item returned
+	From *int64 `json:"from,omitempty"`
+	// Number of the last item returned
+	To *int64 `json:"to,omitempty"`
+	// The last page (number of pages)
+	LastPage int64 `json:"last_page"`
+	// Determines if cursor has more pages after the current page
+	HasMorePages bool `json:"has_more_pages"`
+}
+
+// A single achievement for the game.
+type GameAchievement struct {
+	// The ID of the achievement.
+	ID int64 `json:"id"`
+	// The icon for the achievement.
+	Icon *string `json:"icon,omitempty"`
+	// The localized name of the achievement. Will be null if no localization information exists for the achievement.
+	Name *string `json:"name,omitempty"`
+}
+
+// A single affix for Mythic Keystone dungeons.
+type GameAffix struct {
+	// The ID of the affix.
+	ID int64 `json:"id"`
+	// The icon for the affix.
+	Icon *string `json:"icon,omitempty"`
+	// The localized name of the affix. Will be null if no localization information exists for the affix.
+	Name *string `json:"name,omitempty"`
+}
+
+// A single player class for the game.
+type GameClass struct {
+	// An integer used to identify the class.
+	ID int64 `json:"id"`
+	// The localized name of the class.
+	Name string `json:"name"`
+	// A slug used to identify the class.
+	Slug string `json:"slug"`
+	// The specs supported by the class.
+	Specs []*GameSpec `json:"specs,omitempty"`
+}
+
+// The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game.
+type GameData struct {
+	// The player and enemy abilities for the game.
+	Abilities *GameAbilityPagination `json:"abilities,omitempty"`
+	// Obtain a single ability for the game.
+	Ability *GameAbility `json:"ability,omitempty"`
+	// Obtain a single class for the game.
+	Class *GameClass `json:"class,omitempty"`
+	// Obtain the supported classes for the game.
+	Classes []*GameClass `json:"classes,omitempty"`
+	// Obtain all the factions that guilds and players can belong to.
+	Factions []*GameFaction `json:"factions,omitempty"`
+	// Obtain a single item for the game.
+	Item *GameItem `json:"item,omitempty"`
+	// Items for the game.
+	Items *GameItemPagination `json:"items,omitempty"`
+	// Obtain a single map for the game.
+	Map *GameMap `json:"map,omitempty"`
+	// Maps for the game.
+	Maps *GameMapPagination `json:"maps,omitempty"`
+}
+
+// A single enchant for the game.
+type GameEnchant struct {
+	// The ID of the enchant.
+	ID int64 `json:"id"`
+	// The localized name of the enchant. Will be null if no localization information exists for the enchant.
+	Name *string `json:"name,omitempty"`
+}
+
+// A faction that a player or guild can belong to. Factions have an integer id used to identify them throughout the API and a localized name describing the faction.
+type GameFaction struct {
+	// An integer representing the faction id.
+	ID int64 `json:"id"`
+	// The localized name of the faction.
+	Name string `json:"name"`
+}
+
+// A single item for the game.
+type GameItem struct {
+	// The ID of the item.
+	ID int64 `json:"id"`
+	// The icon for the item.
+	Icon *string `json:"icon,omitempty"`
+	// The localized name of the item. Will be null if no localization information exists for the item.
+	Name *string `json:"name,omitempty"`
+}
+
+type GameItemPagination struct {
+	// List of items on the current page
+	Data []*GameItem `json:"data,omitempty"`
+	// Number of total items selected by the query
+	Total int64 `json:"total"`
+	// Number of items returned per page
+	PerPage int64 `json:"per_page"`
+	// Current page of the cursor
+	CurrentPage int64 `json:"current_page"`
+	// Number of the first item returned
+	From *int64 `json:"from,omitempty"`
+	// Number of the last item returned
+	To *int64 `json:"to,omitempty"`
+	// The last page (number of pages)
+	LastPage int64 `json:"last_page"`
+	// Determines if cursor has more pages after the current page
+	HasMorePages bool `json:"has_more_pages"`
+}
+
+// A single item set for the game.
+type GameItemSet struct {
+	// The ID of the item set.
+	ID int64 `json:"id"`
+	// The localized name of the item set. Will be null if no localization information exists for the item set.
+	Name *string `json:"name,omitempty"`
+}
+
+// A single map for the game.
+type GameMap struct {
+	// The ID of the map.
+	ID int64 `json:"id"`
+	// The localized name of the map. Will be null if no localization information exists for the map.
+	Name *string `json:"name,omitempty"`
+	// The image for the map. Will be null if no file information exists for the map.
+	Filename *string `json:"filename,omitempty"`
+	// The scale factor for the map.
+	SizeFactor *int64 `json:"sizeFactor,omitempty"`
+	// The x offset for the map.
+	OffsetX *int64 `json:"offsetX,omitempty"`
+	// The y offset for the map.
+	OffsetY *int64 `json:"offsetY,omitempty"`
+}
+
+type GameMapPagination struct {
+	// List of items on the current page
+	Data []*GameMap `json:"data,omitempty"`
+	// Number of total items selected by the query
+	Total int64 `json:"total"`
+	// Number of items returned per page
+	PerPage int64 `json:"per_page"`
+	// Current page of the cursor
+	CurrentPage int64 `json:"current_page"`
+	// Number of the first item returned
+	From *int64 `json:"from,omitempty"`
+	// Number of the last item returned
+	To *int64 `json:"to,omitempty"`
+	// The last page (number of pages)
+	LastPage int64 `json:"last_page"`
+	// Determines if cursor has more pages after the current page
+	HasMorePages bool `json:"has_more_pages"`
+}
+
+// A single NPC for the game.
+type GameNpc struct {
+	// The ID of the NPC.
+	ID int64 `json:"id"`
+	// The localized name of the NPC. Will be null if no localization information exists for the NPC.
+	Name *string `json:"name,omitempty"`
+}
+
+// A spec for a given player class.
+type GameSpec struct {
+	// An integer used to identify the spec.
+	ID int64 `json:"id"`
+	// The player class that the spec belongs to.
+	Class *GameClass `json:"class,omitempty"`
+	// The localized name of the class.
+	Name string `json:"name"`
+	// A slug used to identify the spec.
+	Slug string `json:"slug"`
+}
+
+// A single zone for the game.
+type GameZone struct {
+	// The ID of the zone.
+	ID float64 `json:"id"`
+	// The localized name of the zone. Will be null if no localization information exists for the zone.
+	Name *string `json:"name,omitempty"`
+}
+
+// A single guild. Guilds earn their own rankings and contain characters. They may correspond to a guild in-game or be a custom guild created just to hold reports and rankings.
+type Guild struct {
+	Attendance *GuildAttendancePagination `json:"attendance"`
+	// Whether or not the guild has competition mode enabled.
+	CompetitionMode bool `json:"competitionMode"`
+	// The description for the guild that is displayed with the guild name on the site.
+	Description string `json:"description"`
+	// The faction of the guild.
+	Faction *GameFaction `json:"faction"`
+	// The ID of the guild.
+	ID int64 `json:"id"`
+	// The name of the guild.
+	Name string `json:"name"`
+	// The server that the guild belongs to.
+	Server *Server `json:"server"`
+	// Whether or not the guild has stealth mode enabled.
+	StealthMode bool `json:"stealthMode"`
+	// The tags used to label reports. In the site UI, these are called raid teams.
+	Tags []*GuildTag `json:"tags,omitempty"`
+	// The member roster for a specific guild. The result of this query is a paginated list of characters. This query only works for games where the guild roster is verifiable, e.g., it does not work for Classic Warcraft.
+	Members *CharacterPagination `json:"members"`
+	// The current user's rank within the guild. Only accessible via user authentication with the "view-user-profile" scope.
+	CurrentUserRank *GuildRank `json:"currentUserRank,omitempty"`
+	// The guild's ranking for a zone. If `zoneId` is unset or null, uses the latest zone.
+	ZoneRanking *GuildZoneRankings `json:"zoneRanking"`
+	// The type of the guild. A value of 0 means the guild is a Free Company. A value of 1 indicates that the guild is a Static.
+	Type string `json:"type"`
+	// The owning parent guild for this static, if one exists.
+	ParentGuild *Guild `json:"parentGuild,omitempty"`
+	// The statics that belong to this Free Company.
+	Statics []*Guild `json:"statics"`
+}
+
+// Attendance for a specific report within a guild.
+type GuildAttendance struct {
+	// The code of the report for the raid night.
+	Code string `json:"code"`
+	// The players that attended that raid night.
+	Players []*PlayerAttendance `json:"players,omitempty"`
+	// The start time of the raid night.
+	StartTime *float64 `json:"startTime,omitempty"`
+	// The principal zone of the raid night.
+	Zone *Zone `json:"zone,omitempty"`
+}
+
+type GuildAttendancePagination struct {
+	// List of items on the current page
+	Data []*GuildAttendance `json:"data,omitempty"`
+	// Number of total items selected by the query
+	Total int64 `json:"total"`
+	// Number of items returned per page
+	PerPage int64 `json:"per_page"`
+	// Current page of the cursor
+	CurrentPage int64 `json:"current_page"`
+	// Number of the first item returned
+	From *int64 `json:"from,omitempty"`
+	// Number of the last item returned
+	To *int64 `json:"to,omitempty"`
+	// The last page (number of pages)
+	LastPage int64 `json:"last_page"`
+	// Determines if cursor has more pages after the current page
+	HasMorePages bool `json:"has_more_pages"`
+}
+
+// The GuildData object enables the retrieval of single guilds or filtered collections of guilds.
+type GuildData struct {
+	// Obtain a specific guild either by id or by name/serverSlug/serverRegion.
+	Guild *Guild `json:"guild,omitempty"`
+	// The set of all guilds supported by the site. Can be optionally filtered to a specific server id.
+	Guilds *GuildPagination `json:"guilds,omitempty"`
+}
+
+type GuildPagination struct {
+	// List of items on the current page
+	Data []*Guild `json:"data,omitempty"`
+	// Number of total items selected by the query
+	Total int64 `json:"total"`
+	// Number of items returned per page
+	PerPage int64 `json:"per_page"`
+	// Current page of the cursor
+	CurrentPage int64 `json:"current_page"`
+	// Number of the first item returned
+	From *int64 `json:"from,omitempty"`
+	// Number of the last item returned
+	To *int64 `json:"to,omitempty"`
+	// The last page (number of pages)
+	LastPage int64 `json:"last_page"`
+	// Determines if cursor has more pages after the current page
+	HasMorePages bool `json:"has_more_pages"`
+}
+
+// The tag for a specific guild. Tags can be used to categorize reports within a guild. In the site UI, they are referred to as report tags.
+type GuildTag struct {
+	// The ID of the tag.
+	ID int64 `json:"id"`
+	// The guild that the tag belongs to.
+	Guild *Guild `json:"guild"`
+	// The name of the tag.
+	Name string `json:"name"`
+}
+
+// A guild's rankings within a zone.
+type GuildZoneRankings struct {
+	// The progress ranks for the guild. Always uses the highest difficulty.
+	Progress *WorldRegionServerRankPositions `json:"progress,omitempty"`
+	// The all-star based speed rank for the guild.
+	Speed *WorldRegionServerRankPositions `json:"speed,omitempty"`
+	// The complete raid speed ranks for the guild. Most non-Classic WoW zones do not support complete raid ranks.
+	CompleteRaidSpeed *WorldRegionServerRankPositions `json:"completeRaidSpeed,omitempty"`
+}
+
+// A single partition for a given raid zone. Partitions have an integer value representing the actual partition and a localized name that describes what the partition represents. Partitions contain their own rankings, statistics and all stars.
+type Partition struct {
+	// An integer representing a specific partition within a zone.
+	ID int64 `json:"id"`
+	// The localized name for partition.
+	Name string `json:"name"`
+	// The compact localized name for the partition. Typically an abbreviation to conserve space.
+	CompactName string `json:"compactName"`
+	// Whether or not the partition is the current default when viewing rankings or statistics for the zone.
+	Default bool `json:"default"`
+}
+
+// Information about a phase from a boss encounter.
+type PhaseMetadata struct {
+	// Phase ID. 1-indexed
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+	// Whether this phase represents an intermission.
+	IsIntermission *bool `json:"isIntermission,omitempty"`
+}
+
+// A spartan representation of phase transitions during a fight.
+type PhaseTransition struct {
+	// The 1-indexed id of the phase. Phase IDs are absolute within a fight: phases with the same ID correspond to the same semantic phase.
+	ID int64 `json:"id"`
+	// The report-relative timestamp of the transition into the phase. The phase ends at the beginning of the next phase, or at the end of the fight.
+	StartTime float64 `json:"startTime"`
+}
+
+// Attendance for a specific player on a specific raid night.
+type PlayerAttendance struct {
+	// The name of the player.
+	Name *string `json:"name,omitempty"`
+	// The class of the player.
+	Type *string `json:"type,omitempty"`
+	// Presence info for the player. A value of 1 means the player was present. A value of 2 indicates present but on the bench.
+	Presence *int64 `json:"presence,omitempty"`
+}
+
+// A way to obtain data for the top guilds involved in an ongoing world first or realm first progress race.
+type ProgressRaceData struct {
+	// Progress race information including best percentages, pull counts and streams for top guilds. This API is only active when there is an ongoing race. The format of this JSON may change without notice and is not considered frozen.
+	ProgressRace *string `json:"progressRace,omitempty"`
+	// Detailed composition data for a given guild and encounter.
+	DetailedComposition *string `json:"detailedComposition,omitempty"`
+}
+
+type Query struct {
+}
+
+type Rank struct {
+	// The ordinal rank (usually written "Rank N"). Rank 1 = highest.
+	Number int64 `json:"number"`
+	// The percentile of the rank as an integer in [0, 100]. Always null for guild ranks.
+	Percentile *int64 `json:"percentile,omitempty"`
+	// The color class used by the site for this rank.
+	Color string `json:"color"`
+}
+
+// A way to obtain your current rate limit usage.
+type RateLimitData struct {
+	// The total amount of points this API key can spend per hour.
+	LimitPerHour int64 `json:"limitPerHour"`
+	// The total amount of points spent during this hour.
+	PointsSpentThisHour float64 `json:"pointsSpentThisHour"`
+	// The number of seconds remaining until the points reset.
+	PointsResetIn int64 `json:"pointsResetIn"`
+}
+
+// A single region for the game.
+type Region struct {
+	// The ID of the region.
+	ID int64 `json:"id"`
+	// The localized compact name of the region, e.g., US for United States.
+	CompactName string `json:"compactName"`
+	// The localized name of the region.
+	Name string `json:"name"`
+	// The slug for the region, usable when looking up characters and guilds by server.
+	Slug string `json:"slug"`
+	// The subregions found within this region.
+	Subregions []*Subregion `json:"subregions,omitempty"`
+	// The servers found within this region.
+	Servers *ServerPagination `json:"servers,omitempty"`
+}
+
+// A single report uploaded by a player to a guild or personal logs.
+type Report struct {
+	// The report code, a unique value used to identify the report.
+	Code string `json:"code"`
+	// The end time of the report. This is a UNIX timestamp representing the timestamp of the last event contained in the report.
+	EndTime float64 `json:"endTime"`
+	// A set of paginated report events, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	Events *ReportEventPaginator `json:"events,omitempty"`
+	// The number of exported segments in the report. This is how many segments have been processed for rankings.
+	ExportedSegments int64 `json:"exportedSegments"`
+	// A set of fights with details about participating players.
+	Fights []*ReportFight `json:"fights,omitempty"`
+	// A graph of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	Graph *string `json:"graph,omitempty"`
+	// The guild that the report belongs to. If this is null, then the report was uploaded to the user's personal logs.
+	Guild *Guild `json:"guild,omitempty"`
+	// The guild tag that the report belongs to. If this is null, then the report was not tagged.
+	GuildTag *GuildTag `json:"guildTag,omitempty"`
+	// The user that uploaded the report.
+	Owner *User `json:"owner,omitempty"`
+	// Data from the report's master file. This includes version info, all of the players, NPCs and pets that occur in the report, and all the game abilities used in the report.
+	MasterData *ReportMasterData `json:"masterData,omitempty"`
+	// A table of information for the players of a report, including their specs, talents, gear, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	PlayerDetails *string `json:"playerDetails,omitempty"`
+	// A list of all characters that ranked on kills in the report.
+	RankedCharacters []*Character `json:"rankedCharacters,omitempty"`
+	// Rankings information for a report, filterable to specific fights, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	Rankings *string `json:"rankings,omitempty"`
+	// The region of the report.
+	Region *Region `json:"region,omitempty"`
+	// The revision of the report. This number is increased when reports get re-exported.
+	Revision int64 `json:"revision"`
+	// The number of uploaded segments in the report.
+	Segments int64 `json:"segments"`
+	// The start time of the report. This is a UNIX timestamp representing the timestamp of the first event contained in the report.
+	StartTime float64 `json:"startTime"`
+	// A table of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	Table *string `json:"table,omitempty"`
+	// A title for the report.
+	Title string `json:"title"`
+	// The visibility level of the report. The possible values are 'public', 'private', and 'unlisted'.
+	Visibility string `json:"visibility"`
+	// The principal zone that the report contains fights for. Null if no supported zone exists.
+	Zone *Zone `json:"zone,omitempty"`
+	// Whether this report has been archived. Events, tables, and graphs for archived reports are inaccessible unless the retrieving user has a subscription including archive access.
+	ArchiveStatus *ReportArchiveStatus `json:"archiveStatus,omitempty"`
+	// Phase information for all boss encounters observed in this report. This requires loading fight data, but does not double-charge API points if you load fights and phases.
+	Phases []*EncounterPhases `json:"phases,omitempty"`
+}
+
+// The ReportAbility represents a single ability that occurs in the report.
+type ReportAbility struct {
+	// The game ID of the ability.
+	GameID *float64 `json:"gameID,omitempty"`
+	// An icon to use for the ability.
+	Icon *string `json:"icon,omitempty"`
+	// The name of the actor.
+	Name *string `json:"name,omitempty"`
+	// The type of the ability. This represents the type of damage (e.g., the spell school in WoW).
+	Type *string `json:"type,omitempty"`
+}
+
+// The ReportActor represents a single player, pet or NPC that occurs in the report.
+type ReportActor struct {
+	// The game ID of the actor.
+	GameID *float64 `json:"gameID,omitempty"`
+	// An icon to use for the actor. For pets and NPCs, this will be the icon the site chose to represent that actor.
+	Icon *string `json:"icon,omitempty"`
+	// The report ID of the actor. This ID is used in events to identify sources and targets.
+	ID *int64 `json:"id,omitempty"`
+	// The name of the actor.
+	Name *string `json:"name,omitempty"`
+	// The report ID of the actor's owner if the actor is a pet.
+	PetOwner *int64 `json:"petOwner,omitempty"`
+	// The normalized server name of the actor.
+	Server *string `json:"server,omitempty"`
+	// The sub-type of the actor, for players it's their class, and for NPCs, they are further subdivided into normal NPCs and bosses.
+	SubType *string `json:"subType,omitempty"`
+	// The type of the actor, i.e., if it is a player, pet or NPC.
+	Type *string `json:"type,omitempty"`
+}
+
+// The archival status of a report.
+type ReportArchiveStatus struct {
+	// Whether the report has been archived.
+	IsArchived bool `json:"isArchived"`
+	// Whether the current user can access the report. Always true if the report is not archived, and always false if not using user authentication.
+	IsAccessible bool `json:"isAccessible"`
+	// The date on which the report was archived (if it has been archived).
+	ArchiveDate *int64 `json:"archiveDate,omitempty"`
+}
+
+type ReportComponent struct {
+	// The component's unique key.
+	Key string `json:"key"`
+	// The human-readable name of the component
+	Name string `json:"name"`
+	// Whether the component is currently protected from deletion.
+	DeletionProtected bool `json:"deletionProtected"`
+	// The contents of the component script.
+	Contents *string `json:"contents,omitempty"`
+	// Evaluate a report component against report data, returning the result.
+	Evaluate *ReportComponentResult `json:"evaluate,omitempty"`
+}
+
+type ReportComponentData struct {
+	// List all report components attached to the user owning the current API key.
+	List []*ReportComponent `json:"list"`
+	// Get a report component by its ID.
+	Get *ReportComponent `json:"get,omitempty"`
+	// Evaluate a report component script directly, without creating an object first.
+	EvaluateScript *ReportComponentResult `json:"evaluateScript,omitempty"`
+}
+
+// A broad filter for a report component. This is primarily intended to allow callers to invoke a component on a single fight and/or actor without having to encode these values in their script. If multiple fields are specified, they are treated as ANDs (so a timestamp range with a fight ID includes only events within the timestamp range AND within the fight).
+type ReportComponentFilter struct {
+	// Filter input events to those from these fight IDs.
+	FightIDs []int64 `json:"fightIDs,omitempty"`
+	// Filter input events to those that include the `actorID` and their pets.
+	ActorID *int64 `json:"actorID,omitempty"`
+	// Filter input events to those within this range.
+	TimestampRange *ReportComponentRangeFilter `json:"timestampRange,omitempty"`
+	// Filter input events to those from fights having this encounter ID. 0 is used for trash fights and very short boss pulls (typically less than 20s).
+	EncounterID *int64 `json:"encounterID,omitempty"`
+	// Filter input events to a specific phase index. Note that if multiple different encounters are included, the phase index will be applied to *each encounter separately* which is probably not what you want.
+	Phase *int64 `json:"phase,omitempty"`
+	// Filter input events to only those prior to the `deathCutoff`-th death in each fight.
+	//                 ## Special Values
+	//                 - End after a Called Wipe: -1
+	//
+	DeathCutoff *int64 `json:"deathCutoff,omitempty"`
+	// Filter to only include kills, wipes, encounters, or trash. Note: if set to `Trash`, this will override `encounterID`.
+	KillType *KillType `json:"killType,omitempty"`
+	// Filter to fights that have the specified difficulty ID. Difficulty IDs are game- and sometimes zone-specific. Use the `difficulties` field of a `Zone` object to retrieve a list of all valid IDs. Trash does not have a difficulty.
+	Difficulty *int64 `json:"difficulty,omitempty"`
+}
+
+type ReportComponentMutation struct {
+	// Create a new (possibly empty) report component. If successful, the KEY of the new component will be returned.
+	Create *string `json:"create,omitempty"`
+	// Create or update a report component. If a key is provided and a matching component owned by the current user exists, all fields are updated. If the key is not provided, or if it is provided but no matching component exists, a new component is created. If the provided key belongs to another user, an error is returned. Returns the KEY of the component.
+	Upsert string `json:"upsert"`
+	// Update the script contents of a report component, replacing the old contents. True is returned on success, errors are thrown on failure.
+	UpdateContents *bool `json:"updateContents,omitempty"`
+	// Mark (or un-mark) a component as "deletion protected" to prevent accidental deletion. This is a quality of life feature to prevent oopsies, not a security feature.
+	SetDeletionProtected *bool `json:"setDeletionProtected,omitempty"`
+	// Delete a report component. Since this is an API call, there is NO CONFIRMATION. Protected components may not be deleted.
+	Delete *bool `json:"delete,omitempty"`
+}
+
+// Filter input events of a report component to a range of time within a report.
+type ReportComponentRangeFilter struct {
+	// The report-relative start time, in milliseconds.
+	StartTime int64 `json:"startTime"`
+	// The report-relative end time, in milliseconds.
+	EndTime int64 `json:"endTime"`
+}
+
+type ReportComponentResult struct {
+	// The return value of the component as a JSON string. If the component throws an error, this will be null
+	Output *string `json:"output,omitempty"`
+	// When evaluated with `debug: True`, this includes the `console.log` output as a string.
+	Logs *string `json:"logs,omitempty"`
+	// The description of the exception the component threw (if it threw one). Note that component failures DO NOT produce standard GraphQL errors.
+	Error *string `json:"error,omitempty"`
+}
+
+// The ReportData object enables the retrieval of single reports or filtered collections of reports.
+type ReportData struct {
+	// Obtain a specific report by its code.
+	Report *Report `json:"report,omitempty"`
+	// A set of reports for a specific guild, guild tag, or user.
+	Reports *ReportPagination `json:"reports,omitempty"`
+}
+
+// The ReportDungeonPull represents a single pull that occurs in a containing dungeon.
+type ReportDungeonPull struct {
+	// The bounding box that encloses the positions of all players/enemies in the fight.
+	BoundingBox *ReportMapBoundingBox `json:"boundingBox,omitempty"`
+	// The encounter ID of the fight. If the ID is 0, the fight is considered a trash fight.
+	EncounterID int64 `json:"encounterID"`
+	// The end time of the fight. This is a timestamp with millisecond precision that is relative to the start of the report, i.e., the start of the report is considered time 0.
+	EndTime float64 `json:"endTime"`
+	// Information about enemies involved in the fight. Includes report IDs, instance counts, and instance group counts for each NPC.
+	EnemyNPCs []*ReportDungeonPullNpc `json:"enemyNPCs,omitempty"`
+	// The report ID of the fight. This ID can be used to fetch only events, tables or graphs for this fight.
+	ID int64 `json:"id"`
+	// Whether or not the fight was a boss kill, i.e., successful. If this field is false, it means the fight was an incomplete run, etc..
+	Kill *bool `json:"kill,omitempty"`
+	// All the maps that were involved in a pull.
+	Maps []*ReportMap `json:"maps,omitempty"`
+	// The name of the fight.
+	Name string `json:"name"`
+	// The start time of the fight. This is a timestamp with millisecond precision that is relative to the start of the report, i.e., the start of the report is considered time 0.
+	StartTime float64 `json:"startTime"`
+	// The x position of the first mob damaged in the pull at the time this damage happens. Used to establish a marker position to represent where the pull took place.
+	X int64 `json:"x"`
+	// The y position of the first mob damaged in the pull at the time this damage happens. Used to establish a marker position to represent where the pull took place.
+	Y int64 `json:"y"`
+}
+
+// The ReportDungeonPullNPC represents participation info within a single dungeon pull for an NPC.
+type ReportDungeonPullNpc struct {
+	// The report ID of the actor. This ID is used in events to identify sources and targets.
+	ID *int64 `json:"id,omitempty"`
+	// The game ID of the actor, e.g., so it can be looked up on external Web sites.
+	GameID *int64 `json:"gameID,omitempty"`
+	// The lowest instance ID seen during the pull.
+	MinimumInstanceID *int64 `json:"minimumInstanceID,omitempty"`
+	// The highest instance ID seen during the pull.
+	MaximumInstanceID *int64 `json:"maximumInstanceID,omitempty"`
+	// The lowest instance group ID seen during the pull.
+	MinimumInstanceGroupID *int64 `json:"minimumInstanceGroupID,omitempty"`
+	// The highest instance group ID seen during the pull.
+	MaximumInstanceGroupID *int64 `json:"maximumInstanceGroupID,omitempty"`
+}
+
+// The ReportEventPaginator represents a paginated list of report events.
+type ReportEventPaginator struct {
+	// The list of events obtained.
+	Data []Event `json:"data,omitempty"`
+	// A timestamp to pass in as the start time when fetching the next page of data.
+	NextPageTimestamp *float64 `json:"nextPageTimestamp,omitempty"`
+}
+
+// The ReportFight represents a single fight that occurs in the report.
+type ReportFight struct {
+	// The average item level of the players in the fight.
+	AverageItemLevel *float64 `json:"averageItemLevel,omitempty"`
+	// The percentage health of the active boss or bosses at the end of a fight.
+	BossPercentage *float64 `json:"bossPercentage,omitempty"`
+	// The bounding box that encloses the positions of all players/enemies in the fight.
+	BoundingBox *ReportMapBoundingBox `json:"boundingBox,omitempty"`
+	// The combat time excluding prepull events like prepares events and casts. Only set from patch 6.4 onwards.
+	CombatTime *float64 `json:"combatTime,omitempty"`
+	// Whether or not a fight represents an entire raid from start to finish, e.g., in Classic WoW a complete run of Blackwing Lair.
+	CompleteRaid bool `json:"completeRaid"`
+	// The difficulty setting for the raid, dungeon, or arena. Null for trash.
+	Difficulty *int64 `json:"difficulty,omitempty"`
+	// For a dungeon, a list of pulls that occurred in the dungeon. Pulls have details such as the enemies involved in the pull and map info showing where the pull took place.
+	DungeonPulls []*ReportDungeonPull `json:"dungeonPulls,omitempty"`
+	// The encounter ID of the fight. If the ID is 0, the fight is considered a trash fight.
+	EncounterID int64 `json:"encounterID"`
+	// The end time of the fight. This is a timestamp with millisecond precision that is relative to the start of the report, i.e., the start of the report is considered time 0.
+	EndTime float64 `json:"endTime"`
+	// Information about enemy NPCs involved in the fight. Includes report IDs, instance counts, and instance group counts for each NPC.
+	EnemyNPCs []*ReportFightNpc `json:"enemyNPCs,omitempty"`
+	// Information about enemy pets involved in the fight. Includes report IDs, instance counts, and instance group counts for each pet.
+	EnemyPets []*ReportFightNpc `json:"enemyPets,omitempty"`
+	// The IDs of all players involved in a fight. These players can be referenced in the master data actors table to get detailed information about each participant.
+	EnemyPlayers []*int64 `json:"enemyPlayers,omitempty"`
+	// The actual completion percentage of the fight. This is the field used to indicate how far into a fight a wipe was, since fights can be complicated and have multiple bosses, no bosses, bosses that heal, etc.
+	FightPercentage *float64 `json:"fightPercentage,omitempty"`
+	// Information about friendly NPCs involved in the fight. Includes report IDs, instance counts, and instance group counts for each NPC.
+	FriendlyNPCs []*ReportFightNpc `json:"friendlyNPCs,omitempty"`
+	// Information about friendly pets involved in the fight. Includes report IDs, instance counts, and instance group counts for each pet.
+	FriendlyPets []*ReportFightNpc `json:"friendlyPets,omitempty"`
+	// The IDs of all players involved in a fight. These players can be referenced in the master data actors table to get detailed information about each participant.
+	FriendlyPlayers []*int64 `json:"friendlyPlayers,omitempty"`
+	// The game zone the fight takes place in. This should not be confused with the zones used by the sites for rankings. This is the actual in-game zone info.
+	GameZone *GameZone `json:"gameZone,omitempty"`
+	// Whether or not the fight had Echo present.
+	HasEcho *bool `json:"hasEcho,omitempty"`
+	// The report ID of the fight. This ID can be used to fetch only events, tables or graphs for this fight.
+	ID int64 `json:"id"`
+	// Whether or not the fight is still in progress. If this field is false, it means the entire fight has been uploaded.
+	InProgress *bool `json:"inProgress,omitempty"`
+	// Whether or not the fight was a boss kill, i.e., successful. If this field is false, it means the fight was a wipe or a failed run, etc..
+	Kill *bool `json:"kill,omitempty"`
+	// The phase that the encounter was in when the fight ended. Counts up from 1 based off the phase type (i.e., normal phase vs intermission).
+	LastPhase *int64 `json:"lastPhase,omitempty"`
+	// The phase that the encounter was in when the fight ended. Always increases from 0, so a fight with three real phases and two intermissions would count up from 0 to 4.
+	LastPhaseAsAbsoluteIndex *int64 `json:"lastPhaseAsAbsoluteIndex,omitempty"`
+	// Whether or not the phase that the encounter was in when the fight ended was an intermission or not.
+	LastPhaseIsIntermission *bool `json:"lastPhaseIsIntermission,omitempty"`
+	// All the maps that were involved in a fight. For single bosses this will usually be a single map, but for dungeons it will typically be multiple maps.
+	Maps []*ReportMap `json:"maps,omitempty"`
+	// The name of the fight.
+	Name string `json:"name"`
+	// Some boss fights may be converted to trash fights (encounterID = 0). When this occurs, `originalEncounterID` contains the original ID of the encounter.
+	OriginalEncounterID *int64 `json:"originalEncounterID,omitempty"`
+	// List of observed phase transitions during the fight.
+	PhaseTransitions []*PhaseTransition `json:"phaseTransitions,omitempty"`
+	// The group size for the raid, dungeon, or arena. Null for trash.
+	Size *int64 `json:"size,omitempty"`
+	// Whether or not the fight used a standard composition, which is defined as two tanks, two healers, four damage dealers, and no more than two of any job.
+	StandardComposition *bool `json:"standardComposition,omitempty"`
+	// The start time of the fight. This is a timestamp with millisecond precision that is relative to the start of the report, i.e., the start of the report is considered time 0.
+	StartTime float64 `json:"startTime"`
+	// If a wipe was explicitly called using the Companion app, then this field will contain the time. This is a timestamp with millisecond precision that is relative to the start of the report, i.e., the start of the report is considered time 0.
+	WipeCalledTime *float64 `json:"wipeCalledTime,omitempty"`
+}
+
+// The ReportFightNPC represents participation info within a single fight for an NPC.
+type ReportFightNpc struct {
+	// The game ID of the actor. This ID is used in events to identify sources and targets.
+	GameID *int64 `json:"gameID,omitempty"`
+	// The report ID of the actor. This ID is used in events to identify sources and targets.
+	ID *int64 `json:"id,omitempty"`
+	// How many instances of the NPC were seen during the fight.
+	InstanceCount *int64 `json:"instanceCount,omitempty"`
+	// How many packs of the NPC were seen during the fight.
+	GroupCount *int64 `json:"groupCount,omitempty"`
+	// The report ID of the actor that owns this NPC (if it is a pet). This ID is used in events to identify sources and targets.
+	PetOwner *int64 `json:"petOwner,omitempty"`
+}
+
+// The ReportMap represents a single map that a fight can occur on.
+type ReportMap struct {
+	// The map's game ID.
+	ID int64 `json:"id"`
+}
+
+// The ReportMapBoundingBox is a box that encloses the positions of all players and enemies in a fight or dungeon pull.
+type ReportMapBoundingBox struct {
+	// The smallest X position.
+	MinX int64 `json:"minX"`
+	// The largest X position.
+	MaxX int64 `json:"maxX"`
+	// The smallest Y position.
+	MinY int64 `json:"minY"`
+	// The largest Y position.
+	MaxY int64 `json:"maxY"`
+}
+
+// The ReporMastertData object contains information about the log version of a report, as well as the actors and abilities used in the report.
+type ReportMasterData struct {
+	// The version of the client parser that was used to parse and upload this log file.
+	LogVersion int64 `json:"logVersion"`
+	// The version of the game that generated the log file. Used to distinguish Classic and Retail Warcraft primarily.
+	GameVersion *int64 `json:"gameVersion,omitempty"`
+	// The auto-detected locale of the report. This is the source language of the original log file.
+	Lang *string `json:"lang,omitempty"`
+	// A list of every ability that occurs in the report.
+	Abilities []*ReportAbility `json:"abilities,omitempty"`
+	// A list of every actor (player, NPC, pet) that occurs in the report.
+	Actors []*ReportActor `json:"actors,omitempty"`
+}
+
+type ReportPagination struct {
+	// List of items on the current page
+	Data []*Report `json:"data,omitempty"`
+	// Number of total items selected by the query
+	Total int64 `json:"total"`
+	// Number of items returned per page
+	PerPage int64 `json:"per_page"`
+	// Current page of the cursor
+	CurrentPage int64 `json:"current_page"`
+	// Number of the first item returned
+	From *int64 `json:"from,omitempty"`
+	// Number of the last item returned
+	To *int64 `json:"to,omitempty"`
+	// The last page (number of pages)
+	LastPage int64 `json:"last_page"`
+	// Determines if cursor has more pages after the current page
+	HasMorePages bool `json:"has_more_pages"`
+}
+
+// A single server. Servers correspond to actual game servers that characters and guilds reside on.
+type Server struct {
+	// The ID of the server.
+	ID int64 `json:"id"`
+	// The name of the server in the locale of the subregion that the server belongs to.
+	Name string `json:"name"`
+	// The normalized name is a transformation of the name, dropping spaces. It is how the server appears in a World of Warcraft log file.
+	NormalizedName string `json:"normalizedName"`
+	// The server slug, also a transformation of the name following Blizzard rules. For retail World of Warcraft realms, this slug will be in English. For all other games, the slug is just a transformation of the name field.
+	Slug string `json:"slug"`
+	// The region that this server belongs to.
+	Region *Region `json:"region"`
+	// The subregion that this server belongs to.
+	Subregion *Subregion `json:"subregion"`
+	// The guilds found on this server (and any servers connected to this one.
+	Guilds *GuildPagination `json:"guilds,omitempty"`
+	// The characters found on this server (and any servers connected to this one.
+	Characters *CharacterPagination `json:"characters,omitempty"`
+}
+
+type ServerPagination struct {
+	// List of items on the current page
+	Data []*Server `json:"data,omitempty"`
+	// Number of total items selected by the query
+	Total int64 `json:"total"`
+	// Number of items returned per page
+	PerPage int64 `json:"per_page"`
+	// Current page of the cursor
+	CurrentPage int64 `json:"current_page"`
+	// Number of the first item returned
+	From *int64 `json:"from,omitempty"`
+	// Number of the last item returned
+	To *int64 `json:"to,omitempty"`
+	// The last page (number of pages)
+	LastPage int64 `json:"last_page"`
+	// Determines if cursor has more pages after the current page
+	HasMorePages bool `json:"has_more_pages"`
+}
+
+// A single subregion. Subregions are used to divide a region into sub-categories, such as French or German subregions of a Europe region.
+type Subregion struct {
+	// The ID of the subregion.
+	ID int64 `json:"id"`
+	// The localized name of the subregion.
+	Name string `json:"name"`
+	// The region that this subregion is found in.
+	Region *Region `json:"region"`
+	// The servers found within this region.
+	Servers *ServerPagination `json:"servers,omitempty"`
+}
+
+// A single user of the site. Most fields can only be accessed when authenticated as that user with the "view-user-profile" scope.
+type User struct {
+	// The ID of the user.
+	ID int64 `json:"id"`
+	// The name of the user.
+	Name string `json:"name"`
+	// The avatar of the user, typically the main character avatar.
+	Avatar string `json:"avatar"`
+	// The list of guilds to which the user belongs. Only accessible via user authentication when you have the "view-user-profile" scope.
+	Guilds []*Guild `json:"guilds,omitempty"`
+	// The characters claimed by this user. Only accessible via user authentication when you have the "view-user-profile" scope.
+	Characters []*Character `json:"characters,omitempty"`
+}
+
+// The user data object contains basic information about users and lets you retrieve specific users (or the current user if using the user endpoint).
+type UserData struct {
+	// Obtain a specific user by id.
+	User *User `json:"user,omitempty"`
+	// Obtain the current user (only works with user endpoint).
+	CurrentUser *User `json:"currentUser,omitempty"`
+}
+
+// The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc.
+type WorldData struct {
+	// Obtain a specific encounter by id.
+	Encounter *Encounter `json:"encounter,omitempty"`
+	// A single expansion obtained by ID.
+	Expansion *Expansion `json:"expansion,omitempty"`
+	// The set of all expansions supported by the site.
+	Expansions []*Expansion `json:"expansions,omitempty"`
+	// Obtain a specific region by its ID.
+	Region *Region `json:"region,omitempty"`
+	// The set of all regions supported by the site.
+	Regions []*Region `json:"regions,omitempty"`
+	// Obtain a specific server either by id or by slug and region.
+	Server *Server `json:"server,omitempty"`
+	// Obtain a specific subregion by its ID.
+	Subregion *Subregion `json:"subregion,omitempty"`
+	// Obtain a specific zone by its ID.
+	Zone *Zone `json:"zone,omitempty"`
+	// Obtain a set of all zones supported by the site.
+	Zones []*Zone `json:"zones,omitempty"`
+}
+
+// A collection containing some combination of world, region, and server ranks.
+type WorldRegionServerRankPositions struct {
+	WorldRank  *Rank `json:"worldRank,omitempty"`
+	RegionRank *Rank `json:"regionRank,omitempty"`
+	ServerRank *Rank `json:"serverRank,omitempty"`
+}
+
+// A single zone from an expansion that represents a raid, dungeon, arena, etc.
+type Zone struct {
+	// The ID of the zone.
+	ID int64 `json:"id"`
+	// The bracket information for this zone. This field will be null if the zone does not support brackets.
+	Brackets *Bracket `json:"brackets,omitempty"`
+	// A list of all the difficulties supported for this zone.
+	Difficulties []*Difficulty `json:"difficulties,omitempty"`
+	// The encounters found within this zone.
+	Encounters []*Encounter `json:"encounters,omitempty"`
+	// The expansion that this zone belongs to.
+	Expansion *Expansion `json:"expansion"`
+	// Whether or not the entire zone (including all its partitions) is permanently frozen. When a zone is frozen, data involving that zone will never change and can be cached forever.
+	Frozen bool `json:"frozen"`
+	// The name of the zone.
+	Name string `json:"name"`
+	// A list of all the partitions supported for this zone.
+	Partitions []*Partition `json:"partitions,omitempty"`
+}
+
+// All character ranking metrics, plus combined metrics for points and damage/healing that are displayed on character pages.
+type CharacterPageRankingMetricType string
+
+const (
+	// Boss cDPS is unique to FFXIV and is damage done to the boss adjusted for raid-contributing buffs and debuffs.
+	CharacterPageRankingMetricTypeBosscdps CharacterPageRankingMetricType = "bosscdps"
+	// Boss damage per second.
+	CharacterPageRankingMetricTypeBossdps CharacterPageRankingMetricType = "bossdps"
+	// Boss nDPS is unique to FFXIV and is damage done to the boss adjusted for raid-contributing buffs and debuffs.
+	CharacterPageRankingMetricTypeBossndps CharacterPageRankingMetricType = "bossndps"
+	// Boss rDPS is unique to FFXIV and is damage done to the boss adjusted for raid-contributing buffs and debuffs.
+	CharacterPageRankingMetricTypeBossrdps CharacterPageRankingMetricType = "bossrdps"
+	// Choose an appropriate default depending on the other selected parameters.
+	CharacterPageRankingMetricTypeDefault CharacterPageRankingMetricType = "default"
+	// Damage per second.
+	CharacterPageRankingMetricTypeDps CharacterPageRankingMetricType = "dps"
+	// Healing per second.
+	CharacterPageRankingMetricTypeHps CharacterPageRankingMetricType = "hps"
+	// Survivability ranking for tanks. Deprecated. Only supported for some older WoW zones.
+	CharacterPageRankingMetricTypeKrsi CharacterPageRankingMetricType = "krsi"
+	// Score. Used by WoW Mythic dungeons and by ESO trials.
+	CharacterPageRankingMetricTypePlayerscore CharacterPageRankingMetricType = "playerscore"
+	// Speed. Not supported by every zone.
+	CharacterPageRankingMetricTypePlayerspeed CharacterPageRankingMetricType = "playerspeed"
+	// cDPS is unique to FFXIV and is damage done adjusted for raid-contributing buffs and debuffs.
+	CharacterPageRankingMetricTypeCdps CharacterPageRankingMetricType = "cdps"
+	// nDPS is unique to FFXIV and is damage done adjusted for raid-contributing buffs and debuffs.
+	CharacterPageRankingMetricTypeNdps CharacterPageRankingMetricType = "ndps"
+	// rDPS is unique to FFXIV and is damage done adjusted for raid-contributing buffs and debuffs.
+	CharacterPageRankingMetricTypeRdps CharacterPageRankingMetricType = "rdps"
+	// Healing done per second to tanks.
+	CharacterPageRankingMetricTypeTankhps CharacterPageRankingMetricType = "tankhps"
+	// Weighted damage per second. Unique to WoW currently. Used to remove pad damage and reward damage done to high priority targets.
+	CharacterPageRankingMetricTypeWdps CharacterPageRankingMetricType = "wdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterPageRankingMetricTypeHealercombineddps CharacterPageRankingMetricType = "healercombineddps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterPageRankingMetricTypeHealercombinedbossdps CharacterPageRankingMetricType = "healercombinedbossdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterPageRankingMetricTypeHealercombinedcdps CharacterPageRankingMetricType = "healercombinedcdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterPageRankingMetricTypeHealercombinedbosscdps CharacterPageRankingMetricType = "healercombinedbosscdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterPageRankingMetricTypeHealercombinedndps CharacterPageRankingMetricType = "healercombinedndps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterPageRankingMetricTypeHealercombinedbossndps CharacterPageRankingMetricType = "healercombinedbossndps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterPageRankingMetricTypeHealercombinedrdps CharacterPageRankingMetricType = "healercombinedrdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterPageRankingMetricTypeHealercombinedbossrdps CharacterPageRankingMetricType = "healercombinedbossrdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterPageRankingMetricTypeTankcombineddps CharacterPageRankingMetricType = "tankcombineddps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterPageRankingMetricTypeTankcombinedbossdps CharacterPageRankingMetricType = "tankcombinedbossdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterPageRankingMetricTypeTankcombinedcdps CharacterPageRankingMetricType = "tankcombinedcdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterPageRankingMetricTypeTankcombinedbosscdps CharacterPageRankingMetricType = "tankcombinedbosscdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterPageRankingMetricTypeTankcombinedndps CharacterPageRankingMetricType = "tankcombinedndps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterPageRankingMetricTypeTankcombinedbossndps CharacterPageRankingMetricType = "tankcombinedbossndps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterPageRankingMetricTypeTankcombinedrdps CharacterPageRankingMetricType = "tankcombinedrdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterPageRankingMetricTypeTankcombinedbossrdps CharacterPageRankingMetricType = "tankcombinedbossrdps"
+	// Combined score and damage. Used by WoW Mythic+ and Fellowship. Returns score rankings plus an additional throughputRankings field with damage data filtered by key and item level.
+	CharacterPageRankingMetricTypePointsAndDamage CharacterPageRankingMetricType = "points_and_damage"
+	// Combined score and healing. Used by WoW Mythic+ and Fellowship. Returns score rankings plus an additional throughputRankings field with healing data filtered by key and item level.
+	CharacterPageRankingMetricTypePointsAndHealing CharacterPageRankingMetricType = "points_and_healing"
+)
+
+var AllCharacterPageRankingMetricType = []CharacterPageRankingMetricType{
+	CharacterPageRankingMetricTypeBosscdps,
+	CharacterPageRankingMetricTypeBossdps,
+	CharacterPageRankingMetricTypeBossndps,
+	CharacterPageRankingMetricTypeBossrdps,
+	CharacterPageRankingMetricTypeDefault,
+	CharacterPageRankingMetricTypeDps,
+	CharacterPageRankingMetricTypeHps,
+	CharacterPageRankingMetricTypeKrsi,
+	CharacterPageRankingMetricTypePlayerscore,
+	CharacterPageRankingMetricTypePlayerspeed,
+	CharacterPageRankingMetricTypeCdps,
+	CharacterPageRankingMetricTypeNdps,
+	CharacterPageRankingMetricTypeRdps,
+	CharacterPageRankingMetricTypeTankhps,
+	CharacterPageRankingMetricTypeWdps,
+	CharacterPageRankingMetricTypeHealercombineddps,
+	CharacterPageRankingMetricTypeHealercombinedbossdps,
+	CharacterPageRankingMetricTypeHealercombinedcdps,
+	CharacterPageRankingMetricTypeHealercombinedbosscdps,
+	CharacterPageRankingMetricTypeHealercombinedndps,
+	CharacterPageRankingMetricTypeHealercombinedbossndps,
+	CharacterPageRankingMetricTypeHealercombinedrdps,
+	CharacterPageRankingMetricTypeHealercombinedbossrdps,
+	CharacterPageRankingMetricTypeTankcombineddps,
+	CharacterPageRankingMetricTypeTankcombinedbossdps,
+	CharacterPageRankingMetricTypeTankcombinedcdps,
+	CharacterPageRankingMetricTypeTankcombinedbosscdps,
+	CharacterPageRankingMetricTypeTankcombinedndps,
+	CharacterPageRankingMetricTypeTankcombinedbossndps,
+	CharacterPageRankingMetricTypeTankcombinedrdps,
+	CharacterPageRankingMetricTypeTankcombinedbossrdps,
+	CharacterPageRankingMetricTypePointsAndDamage,
+	CharacterPageRankingMetricTypePointsAndHealing,
+}
+
+func (e CharacterPageRankingMetricType) IsValid() bool {
+	switch e {
+	case CharacterPageRankingMetricTypeBosscdps, CharacterPageRankingMetricTypeBossdps, CharacterPageRankingMetricTypeBossndps, CharacterPageRankingMetricTypeBossrdps, CharacterPageRankingMetricTypeDefault, CharacterPageRankingMetricTypeDps, CharacterPageRankingMetricTypeHps, CharacterPageRankingMetricTypeKrsi, CharacterPageRankingMetricTypePlayerscore, CharacterPageRankingMetricTypePlayerspeed, CharacterPageRankingMetricTypeCdps, CharacterPageRankingMetricTypeNdps, CharacterPageRankingMetricTypeRdps, CharacterPageRankingMetricTypeTankhps, CharacterPageRankingMetricTypeWdps, CharacterPageRankingMetricTypeHealercombineddps, CharacterPageRankingMetricTypeHealercombinedbossdps, CharacterPageRankingMetricTypeHealercombinedcdps, CharacterPageRankingMetricTypeHealercombinedbosscdps, CharacterPageRankingMetricTypeHealercombinedndps, CharacterPageRankingMetricTypeHealercombinedbossndps, CharacterPageRankingMetricTypeHealercombinedrdps, CharacterPageRankingMetricTypeHealercombinedbossrdps, CharacterPageRankingMetricTypeTankcombineddps, CharacterPageRankingMetricTypeTankcombinedbossdps, CharacterPageRankingMetricTypeTankcombinedcdps, CharacterPageRankingMetricTypeTankcombinedbosscdps, CharacterPageRankingMetricTypeTankcombinedndps, CharacterPageRankingMetricTypeTankcombinedbossndps, CharacterPageRankingMetricTypeTankcombinedrdps, CharacterPageRankingMetricTypeTankcombinedbossrdps, CharacterPageRankingMetricTypePointsAndDamage, CharacterPageRankingMetricTypePointsAndHealing:
+		return true
+	}
+	return false
+}
+
+func (e CharacterPageRankingMetricType) String() string {
+	return string(e)
+}
+
+func (e *CharacterPageRankingMetricType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CharacterPageRankingMetricType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CharacterPageRankingMetricType", str)
+	}
+	return nil
+}
+
+func (e CharacterPageRankingMetricType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CharacterPageRankingMetricType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CharacterPageRankingMetricType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// All the possible metrics.
+type CharacterRankingMetricType string
+
+const (
+	// Boss cDPS is unique to FFXIV and is damage done to the boss adjusted for raid-contributing buffs and debuffs.
+	CharacterRankingMetricTypeBosscdps CharacterRankingMetricType = "bosscdps"
+	// Boss damage per second.
+	CharacterRankingMetricTypeBossdps CharacterRankingMetricType = "bossdps"
+	// Boss nDPS is unique to FFXIV and is damage done to the boss adjusted for raid-contributing buffs and debuffs.
+	CharacterRankingMetricTypeBossndps CharacterRankingMetricType = "bossndps"
+	// Boss rDPS is unique to FFXIV and is damage done to the boss adjusted for raid-contributing buffs and debuffs.
+	CharacterRankingMetricTypeBossrdps CharacterRankingMetricType = "bossrdps"
+	// Choose an appropriate default depending on the other selected parameters.
+	CharacterRankingMetricTypeDefault CharacterRankingMetricType = "default"
+	// Damage per second.
+	CharacterRankingMetricTypeDps CharacterRankingMetricType = "dps"
+	// Healing per second.
+	CharacterRankingMetricTypeHps CharacterRankingMetricType = "hps"
+	// Survivability ranking for tanks. Deprecated. Only supported for some older WoW zones.
+	CharacterRankingMetricTypeKrsi CharacterRankingMetricType = "krsi"
+	// Score. Used by WoW Mythic dungeons and by ESO trials.
+	CharacterRankingMetricTypePlayerscore CharacterRankingMetricType = "playerscore"
+	// Speed. Not supported by every zone.
+	CharacterRankingMetricTypePlayerspeed CharacterRankingMetricType = "playerspeed"
+	// cDPS is unique to FFXIV and is damage done adjusted for raid-contributing buffs and debuffs.
+	CharacterRankingMetricTypeCdps CharacterRankingMetricType = "cdps"
+	// nDPS is unique to FFXIV and is damage done adjusted for raid-contributing buffs and debuffs.
+	CharacterRankingMetricTypeNdps CharacterRankingMetricType = "ndps"
+	// rDPS is unique to FFXIV and is damage done adjusted for raid-contributing buffs and debuffs.
+	CharacterRankingMetricTypeRdps CharacterRankingMetricType = "rdps"
+	// Healing done per second to tanks.
+	CharacterRankingMetricTypeTankhps CharacterRankingMetricType = "tankhps"
+	// Weighted damage per second. Unique to WoW currently. Used to remove pad damage and reward damage done to high priority targets.
+	CharacterRankingMetricTypeWdps CharacterRankingMetricType = "wdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterRankingMetricTypeHealercombineddps CharacterRankingMetricType = "healercombineddps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterRankingMetricTypeHealercombinedbossdps CharacterRankingMetricType = "healercombinedbossdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterRankingMetricTypeHealercombinedcdps CharacterRankingMetricType = "healercombinedcdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterRankingMetricTypeHealercombinedbosscdps CharacterRankingMetricType = "healercombinedbosscdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterRankingMetricTypeHealercombinedndps CharacterRankingMetricType = "healercombinedndps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterRankingMetricTypeHealercombinedbossndps CharacterRankingMetricType = "healercombinedbossndps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterRankingMetricTypeHealercombinedrdps CharacterRankingMetricType = "healercombinedrdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of healers in eight player content.
+	CharacterRankingMetricTypeHealercombinedbossrdps CharacterRankingMetricType = "healercombinedbossrdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterRankingMetricTypeTankcombineddps CharacterRankingMetricType = "tankcombineddps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterRankingMetricTypeTankcombinedbossdps CharacterRankingMetricType = "tankcombinedbossdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterRankingMetricTypeTankcombinedcdps CharacterRankingMetricType = "tankcombinedcdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterRankingMetricTypeTankcombinedbosscdps CharacterRankingMetricType = "tankcombinedbosscdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterRankingMetricTypeTankcombinedndps CharacterRankingMetricType = "tankcombinedndps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterRankingMetricTypeTankcombinedbossndps CharacterRankingMetricType = "tankcombinedbossndps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterRankingMetricTypeTankcombinedrdps CharacterRankingMetricType = "tankcombinedrdps"
+	// Unique to FFXIV. Represents the combined ranking for a pair of tanks in eight player content.
+	CharacterRankingMetricTypeTankcombinedbossrdps CharacterRankingMetricType = "tankcombinedbossrdps"
+)
+
+var AllCharacterRankingMetricType = []CharacterRankingMetricType{
+	CharacterRankingMetricTypeBosscdps,
+	CharacterRankingMetricTypeBossdps,
+	CharacterRankingMetricTypeBossndps,
+	CharacterRankingMetricTypeBossrdps,
+	CharacterRankingMetricTypeDefault,
+	CharacterRankingMetricTypeDps,
+	CharacterRankingMetricTypeHps,
+	CharacterRankingMetricTypeKrsi,
+	CharacterRankingMetricTypePlayerscore,
+	CharacterRankingMetricTypePlayerspeed,
+	CharacterRankingMetricTypeCdps,
+	CharacterRankingMetricTypeNdps,
+	CharacterRankingMetricTypeRdps,
+	CharacterRankingMetricTypeTankhps,
+	CharacterRankingMetricTypeWdps,
+	CharacterRankingMetricTypeHealercombineddps,
+	CharacterRankingMetricTypeHealercombinedbossdps,
+	CharacterRankingMetricTypeHealercombinedcdps,
+	CharacterRankingMetricTypeHealercombinedbosscdps,
+	CharacterRankingMetricTypeHealercombinedndps,
+	CharacterRankingMetricTypeHealercombinedbossndps,
+	CharacterRankingMetricTypeHealercombinedrdps,
+	CharacterRankingMetricTypeHealercombinedbossrdps,
+	CharacterRankingMetricTypeTankcombineddps,
+	CharacterRankingMetricTypeTankcombinedbossdps,
+	CharacterRankingMetricTypeTankcombinedcdps,
+	CharacterRankingMetricTypeTankcombinedbosscdps,
+	CharacterRankingMetricTypeTankcombinedndps,
+	CharacterRankingMetricTypeTankcombinedbossndps,
+	CharacterRankingMetricTypeTankcombinedrdps,
+	CharacterRankingMetricTypeTankcombinedbossrdps,
+}
+
+func (e CharacterRankingMetricType) IsValid() bool {
+	switch e {
+	case CharacterRankingMetricTypeBosscdps, CharacterRankingMetricTypeBossdps, CharacterRankingMetricTypeBossndps, CharacterRankingMetricTypeBossrdps, CharacterRankingMetricTypeDefault, CharacterRankingMetricTypeDps, CharacterRankingMetricTypeHps, CharacterRankingMetricTypeKrsi, CharacterRankingMetricTypePlayerscore, CharacterRankingMetricTypePlayerspeed, CharacterRankingMetricTypeCdps, CharacterRankingMetricTypeNdps, CharacterRankingMetricTypeRdps, CharacterRankingMetricTypeTankhps, CharacterRankingMetricTypeWdps, CharacterRankingMetricTypeHealercombineddps, CharacterRankingMetricTypeHealercombinedbossdps, CharacterRankingMetricTypeHealercombinedcdps, CharacterRankingMetricTypeHealercombinedbosscdps, CharacterRankingMetricTypeHealercombinedndps, CharacterRankingMetricTypeHealercombinedbossndps, CharacterRankingMetricTypeHealercombinedrdps, CharacterRankingMetricTypeHealercombinedbossrdps, CharacterRankingMetricTypeTankcombineddps, CharacterRankingMetricTypeTankcombinedbossdps, CharacterRankingMetricTypeTankcombinedcdps, CharacterRankingMetricTypeTankcombinedbosscdps, CharacterRankingMetricTypeTankcombinedndps, CharacterRankingMetricTypeTankcombinedbossndps, CharacterRankingMetricTypeTankcombinedrdps, CharacterRankingMetricTypeTankcombinedbossrdps:
+		return true
+	}
+	return false
+}
+
+func (e CharacterRankingMetricType) String() string {
+	return string(e)
+}
+
+func (e *CharacterRankingMetricType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CharacterRankingMetricType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CharacterRankingMetricType", str)
+	}
+	return nil
+}
+
+func (e CharacterRankingMetricType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CharacterRankingMetricType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CharacterRankingMetricType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The type of events or tables to examine.
+type EventDataType string
+
+const (
+	// All Events
+	EventDataTypeAll EventDataType = "All"
+	// Buffs.
+	EventDataTypeBuffs EventDataType = "Buffs"
+	// Casts.
+	EventDataTypeCasts EventDataType = "Casts"
+	// Combatant info events (includes gear).
+	EventDataTypeCombatantInfo EventDataType = "CombatantInfo"
+	// Damage done.
+	EventDataTypeDamageDone EventDataType = "DamageDone"
+	// Damage taken.
+	EventDataTypeDamageTaken EventDataType = "DamageTaken"
+	// Deaths.
+	EventDataTypeDeaths EventDataType = "Deaths"
+	// Debuffs.
+	EventDataTypeDebuffs EventDataType = "Debuffs"
+	// Dispels.
+	EventDataTypeDispels EventDataType = "Dispels"
+	// Healing done.
+	EventDataTypeHealing EventDataType = "Healing"
+	// Interrupts.
+	EventDataTypeInterrupts EventDataType = "Interrupts"
+	// Resources.
+	EventDataTypeResources EventDataType = "Resources"
+	// Summons
+	EventDataTypeSummons EventDataType = "Summons"
+	// Threat.
+	EventDataTypeThreat EventDataType = "Threat"
+)
+
+var AllEventDataType = []EventDataType{
+	EventDataTypeAll,
+	EventDataTypeBuffs,
+	EventDataTypeCasts,
+	EventDataTypeCombatantInfo,
+	EventDataTypeDamageDone,
+	EventDataTypeDamageTaken,
+	EventDataTypeDeaths,
+	EventDataTypeDebuffs,
+	EventDataTypeDispels,
+	EventDataTypeHealing,
+	EventDataTypeInterrupts,
+	EventDataTypeResources,
+	EventDataTypeSummons,
+	EventDataTypeThreat,
+}
+
+func (e EventDataType) IsValid() bool {
+	switch e {
+	case EventDataTypeAll, EventDataTypeBuffs, EventDataTypeCasts, EventDataTypeCombatantInfo, EventDataTypeDamageDone, EventDataTypeDamageTaken, EventDataTypeDeaths, EventDataTypeDebuffs, EventDataTypeDispels, EventDataTypeHealing, EventDataTypeInterrupts, EventDataTypeResources, EventDataTypeSummons, EventDataTypeThreat:
+		return true
+	}
+	return false
+}
+
+func (e EventDataType) String() string {
+	return string(e)
+}
+
+func (e *EventDataType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = EventDataType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid EventDataType", str)
+	}
+	return nil
+}
+
+func (e EventDataType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *EventDataType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e EventDataType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether to include ranks with major external buffs. Not all metrics, zones and games support this. It will be ignored if unsupported.
+type ExternalBuffRankFilter string
+
+const (
+	// Include all ranks, regardless of external buffs.
+	ExternalBuffRankFilterAny ExternalBuffRankFilter = "Any"
+	// Only include ranks that DO CONTAIN external buffs.
+	ExternalBuffRankFilterRequire ExternalBuffRankFilter = "Require"
+	// Only include ranks that DO NOT CONTAIN external buffs.
+	ExternalBuffRankFilterExclude ExternalBuffRankFilter = "Exclude"
+)
+
+var AllExternalBuffRankFilter = []ExternalBuffRankFilter{
+	ExternalBuffRankFilterAny,
+	ExternalBuffRankFilterRequire,
+	ExternalBuffRankFilterExclude,
+}
+
+func (e ExternalBuffRankFilter) IsValid() bool {
+	switch e {
+	case ExternalBuffRankFilterAny, ExternalBuffRankFilterRequire, ExternalBuffRankFilterExclude:
+		return true
+	}
+	return false
+}
+
+func (e ExternalBuffRankFilter) String() string {
+	return string(e)
+}
+
+func (e *ExternalBuffRankFilter) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ExternalBuffRankFilter(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ExternalBuffRankFilter", str)
+	}
+	return nil
+}
+
+func (e ExternalBuffRankFilter) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ExternalBuffRankFilter) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ExternalBuffRankFilter) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// All the possible metrics.
+type FightRankingMetricType string
+
+const (
+	// Choose an appropriate default depending on the other selected parameters.
+	FightRankingMetricTypeDefault FightRankingMetricType = "default"
+	// A metric that rewards minimizing deaths and damage taken.
+	FightRankingMetricTypeExecution FightRankingMetricType = "execution"
+	// Feats of strength in WoW or Challenges in FF.
+	FightRankingMetricTypeFeats FightRankingMetricType = "feats"
+	// For Mythic+ dungeons in WoW, represents the team's score. Used for ESO trials and dungeons also.
+	FightRankingMetricTypeScore FightRankingMetricType = "score"
+	// Speed metric, based off the duration of the fight.
+	FightRankingMetricTypeSpeed FightRankingMetricType = "speed"
+	// Progress metric, based off when the fight was defeated.
+	FightRankingMetricTypeProgress FightRankingMetricType = "progress"
+)
+
+var AllFightRankingMetricType = []FightRankingMetricType{
+	FightRankingMetricTypeDefault,
+	FightRankingMetricTypeExecution,
+	FightRankingMetricTypeFeats,
+	FightRankingMetricTypeScore,
+	FightRankingMetricTypeSpeed,
+	FightRankingMetricTypeProgress,
+}
+
+func (e FightRankingMetricType) IsValid() bool {
+	switch e {
+	case FightRankingMetricTypeDefault, FightRankingMetricTypeExecution, FightRankingMetricTypeFeats, FightRankingMetricTypeScore, FightRankingMetricTypeSpeed, FightRankingMetricTypeProgress:
+		return true
+	}
+	return false
+}
+
+func (e FightRankingMetricType) String() string {
+	return string(e)
+}
+
+func (e *FightRankingMetricType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FightRankingMetricType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FightRankingMetricType", str)
+	}
+	return nil
+}
+
+func (e FightRankingMetricType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FightRankingMetricType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FightRankingMetricType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The type of graph to examine.
+type GraphDataType string
+
+const (
+	// Summary Overview
+	GraphDataTypeSummary GraphDataType = "Summary"
+	// Buffs.
+	GraphDataTypeBuffs GraphDataType = "Buffs"
+	// Casts.
+	GraphDataTypeCasts GraphDataType = "Casts"
+	// Damage done.
+	GraphDataTypeDamageDone GraphDataType = "DamageDone"
+	// Damage taken.
+	GraphDataTypeDamageTaken GraphDataType = "DamageTaken"
+	// Deaths.
+	GraphDataTypeDeaths GraphDataType = "Deaths"
+	// Debuffs.
+	GraphDataTypeDebuffs GraphDataType = "Debuffs"
+	// Dispels.
+	GraphDataTypeDispels GraphDataType = "Dispels"
+	// Healing done.
+	GraphDataTypeHealing GraphDataType = "Healing"
+	// Interrupts.
+	GraphDataTypeInterrupts GraphDataType = "Interrupts"
+	// Resources.
+	GraphDataTypeResources GraphDataType = "Resources"
+	// Summons
+	GraphDataTypeSummons GraphDataType = "Summons"
+	// Survivability (death info across multiple pulls).
+	GraphDataTypeSurvivability GraphDataType = "Survivability"
+	// Threat.
+	GraphDataTypeThreat GraphDataType = "Threat"
+)
+
+var AllGraphDataType = []GraphDataType{
+	GraphDataTypeSummary,
+	GraphDataTypeBuffs,
+	GraphDataTypeCasts,
+	GraphDataTypeDamageDone,
+	GraphDataTypeDamageTaken,
+	GraphDataTypeDeaths,
+	GraphDataTypeDebuffs,
+	GraphDataTypeDispels,
+	GraphDataTypeHealing,
+	GraphDataTypeInterrupts,
+	GraphDataTypeResources,
+	GraphDataTypeSummons,
+	GraphDataTypeSurvivability,
+	GraphDataTypeThreat,
+}
+
+func (e GraphDataType) IsValid() bool {
+	switch e {
+	case GraphDataTypeSummary, GraphDataTypeBuffs, GraphDataTypeCasts, GraphDataTypeDamageDone, GraphDataTypeDamageTaken, GraphDataTypeDeaths, GraphDataTypeDebuffs, GraphDataTypeDispels, GraphDataTypeHealing, GraphDataTypeInterrupts, GraphDataTypeResources, GraphDataTypeSummons, GraphDataTypeSurvivability, GraphDataTypeThreat:
+		return true
+	}
+	return false
+}
+
+func (e GraphDataType) String() string {
+	return string(e)
+}
+
+func (e *GraphDataType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GraphDataType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GraphDataType", str)
+	}
+	return nil
+}
+
+func (e GraphDataType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *GraphDataType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e GraphDataType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Rank within a guild or team on the website. This is separate from in-game ranks and does NOT correspond to the rank of the user or character in-game.
+type GuildRank string
+
+const (
+	// The user is not a member of this guild or team.
+	GuildRankNonMember   GuildRank = "NonMember"
+	GuildRankApplicant   GuildRank = "Applicant"
+	GuildRankRecruit     GuildRank = "Recruit"
+	GuildRankMember      GuildRank = "Member"
+	GuildRankOfficer     GuildRank = "Officer"
+	GuildRankGuildMaster GuildRank = "GuildMaster"
+)
+
+var AllGuildRank = []GuildRank{
+	GuildRankNonMember,
+	GuildRankApplicant,
+	GuildRankRecruit,
+	GuildRankMember,
+	GuildRankOfficer,
+	GuildRankGuildMaster,
+}
+
+func (e GuildRank) IsValid() bool {
+	switch e {
+	case GuildRankNonMember, GuildRankApplicant, GuildRankRecruit, GuildRankMember, GuildRankOfficer, GuildRankGuildMaster:
+		return true
+	}
+	return false
+}
+
+func (e GuildRank) String() string {
+	return string(e)
+}
+
+func (e *GuildRank) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GuildRank(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GuildRank", str)
+	}
+	return nil
+}
+
+func (e GuildRank) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *GuildRank) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e GuildRank) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Hard mode level filter. Used for WoW Classic Hard Modes. For ESO hard modes, use `difficulty`. Hard mode levels range from 0-4, with 0 being normal mode and 4 being the highest hard mode.
+type HardModeLevelRankFilter string
+
+const (
+	// Any hard mode level (including normal mode).
+	HardModeLevelRankFilterAny HardModeLevelRankFilter = "Any"
+	// The highest hard mode level. Convenience alias for hard mode level 4.
+	HardModeLevelRankFilterHighest HardModeLevelRankFilter = "Highest"
+	// The normal (non-hard) mode level. Convenience alias for hard mode level 0.
+	HardModeLevelRankFilterNormalMode HardModeLevelRankFilter = "NormalMode"
+	// Hard mode level 0.
+	HardModeLevelRankFilterLevel0 HardModeLevelRankFilter = "Level0"
+	// Hard mode level 1.
+	HardModeLevelRankFilterLevel1 HardModeLevelRankFilter = "Level1"
+	// Hard mode level 2.
+	HardModeLevelRankFilterLevel2 HardModeLevelRankFilter = "Level2"
+	// Hard mode level 3.
+	HardModeLevelRankFilterLevel3 HardModeLevelRankFilter = "Level3"
+	// Hard mode level 4.
+	HardModeLevelRankFilterLevel4 HardModeLevelRankFilter = "Level4"
+)
+
+var AllHardModeLevelRankFilter = []HardModeLevelRankFilter{
+	HardModeLevelRankFilterAny,
+	HardModeLevelRankFilterHighest,
+	HardModeLevelRankFilterNormalMode,
+	HardModeLevelRankFilterLevel0,
+	HardModeLevelRankFilterLevel1,
+	HardModeLevelRankFilterLevel2,
+	HardModeLevelRankFilterLevel3,
+	HardModeLevelRankFilterLevel4,
+}
+
+func (e HardModeLevelRankFilter) IsValid() bool {
+	switch e {
+	case HardModeLevelRankFilterAny, HardModeLevelRankFilterHighest, HardModeLevelRankFilterNormalMode, HardModeLevelRankFilterLevel0, HardModeLevelRankFilterLevel1, HardModeLevelRankFilterLevel2, HardModeLevelRankFilterLevel3, HardModeLevelRankFilterLevel4:
+		return true
+	}
+	return false
+}
+
+func (e HardModeLevelRankFilter) String() string {
+	return string(e)
+}
+
+func (e *HardModeLevelRankFilter) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = HardModeLevelRankFilter(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid HardModeLevelRankFilter", str)
+	}
+	return nil
+}
+
+func (e HardModeLevelRankFilter) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *HardModeLevelRankFilter) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e HardModeLevelRankFilter) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether or not to fetch information for friendlies or enemies.
+type HostilityType string
+
+const (
+	// Fetch information for friendlies.
+	HostilityTypeFriendlies HostilityType = "Friendlies"
+	// Fetch information for enemies.
+	HostilityTypeEnemies HostilityType = "Enemies"
+)
+
+var AllHostilityType = []HostilityType{
+	HostilityTypeFriendlies,
+	HostilityTypeEnemies,
+}
+
+func (e HostilityType) IsValid() bool {
+	switch e {
+	case HostilityTypeFriendlies, HostilityTypeEnemies:
+		return true
+	}
+	return false
+}
+
+func (e HostilityType) String() string {
+	return string(e)
+}
+
+func (e *HostilityType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = HostilityType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid HostilityType", str)
+	}
+	return nil
+}
+
+func (e HostilityType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *HostilityType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e HostilityType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// A filter for kills vs wipes and encounters vs trash.
+type KillType string
+
+const (
+	// Include trash and encounters.
+	KillTypeAll KillType = "All"
+	// Only include encounters (kills and wipes).
+	KillTypeEncounters KillType = "Encounters"
+	// Only include encounters that end in a kill.
+	KillTypeKills KillType = "Kills"
+	// Only include trash.
+	KillTypeTrash KillType = "Trash"
+	// Only include encounters that end in a wipe.
+	KillTypeWipes KillType = "Wipes"
+)
+
+var AllKillType = []KillType{
+	KillTypeAll,
+	KillTypeEncounters,
+	KillTypeKills,
+	KillTypeTrash,
+	KillTypeWipes,
+}
+
+func (e KillType) IsValid() bool {
+	switch e {
+	case KillTypeAll, KillTypeEncounters, KillTypeKills, KillTypeTrash, KillTypeWipes:
+		return true
+	}
+	return false
+}
+
+func (e KillType) String() string {
+	return string(e)
+}
+
+func (e *KillType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = KillType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid KillType", str)
+	}
+	return nil
+}
+
+func (e KillType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *KillType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e KillType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Source of the rank. Most ranks only support log ranks, but some games (ESO) and content types (Retail WoW M+) support leaderboard ranks with no backing log.
+type LeaderboardRank string
+
+const (
+	// All ranks are included.
+	LeaderboardRankAny LeaderboardRank = "Any"
+	// Only include ranks with a backing log.
+	LeaderboardRankLogsOnly LeaderboardRank = "LogsOnly"
+)
+
+var AllLeaderboardRank = []LeaderboardRank{
+	LeaderboardRankAny,
+	LeaderboardRankLogsOnly,
+}
+
+func (e LeaderboardRank) IsValid() bool {
+	switch e {
+	case LeaderboardRankAny, LeaderboardRankLogsOnly:
+		return true
+	}
+	return false
+}
+
+func (e LeaderboardRank) String() string {
+	return string(e)
+}
+
+func (e *LeaderboardRank) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LeaderboardRank(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LeaderboardRank", str)
+	}
+	return nil
+}
+
+func (e LeaderboardRank) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LeaderboardRank) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LeaderboardRank) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether or not rankings are compared against best scores for the entire tier or against all parses in a two week window.
+type RankingCompareType string
+
+const (
+	// Compare against rankings.
+	RankingCompareTypeRankings RankingCompareType = "Rankings"
+	// Compare against all parses in a two week window.
+	RankingCompareTypeParses RankingCompareType = "Parses"
+)
+
+var AllRankingCompareType = []RankingCompareType{
+	RankingCompareTypeRankings,
+	RankingCompareTypeParses,
+}
+
+func (e RankingCompareType) IsValid() bool {
+	switch e {
+	case RankingCompareTypeRankings, RankingCompareTypeParses:
+		return true
+	}
+	return false
+}
+
+func (e RankingCompareType) String() string {
+	return string(e)
+}
+
+func (e *RankingCompareType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RankingCompareType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RankingCompareType", str)
+	}
+	return nil
+}
+
+func (e RankingCompareType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RankingCompareType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RankingCompareType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether or not rankings are today or historical.
+type RankingTimeframeType string
+
+const (
+	// Compare against today's rankings.
+	RankingTimeframeTypeToday RankingTimeframeType = "Today"
+	// Compare against historical rankings.
+	RankingTimeframeTypeHistorical RankingTimeframeType = "Historical"
+)
+
+var AllRankingTimeframeType = []RankingTimeframeType{
+	RankingTimeframeTypeToday,
+	RankingTimeframeTypeHistorical,
+}
+
+func (e RankingTimeframeType) IsValid() bool {
+	switch e {
+	case RankingTimeframeTypeToday, RankingTimeframeTypeHistorical:
+		return true
+	}
+	return false
+}
+
+func (e RankingTimeframeType) String() string {
+	return string(e)
+}
+
+func (e *RankingTimeframeType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RankingTimeframeType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RankingTimeframeType", str)
+	}
+	return nil
+}
+
+func (e RankingTimeframeType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RankingTimeframeType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RankingTimeframeType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// All the possible metrics.
+type ReportRankingMetricType string
+
+const (
+	// Boss cDPS is unique to FFXIV and is damage done to the boss adjusted for raid-contributing buffs and debuffs.
+	ReportRankingMetricTypeBosscdps ReportRankingMetricType = "bosscdps"
+	// Boss damage per second.
+	ReportRankingMetricTypeBossdps ReportRankingMetricType = "bossdps"
+	// Boss nDPS is unique to FFXIV and is damage done to the boss adjusted for raid-contributing buffs and debuffs.
+	ReportRankingMetricTypeBossndps ReportRankingMetricType = "bossndps"
+	// Boss rDPS is unique to FFXIV and is damage done to the boss adjusted for raid-contributing buffs and debuffs.
+	ReportRankingMetricTypeBossrdps ReportRankingMetricType = "bossrdps"
+	// Choose an appropriate default depending on the other selected parameters.
+	ReportRankingMetricTypeDefault ReportRankingMetricType = "default"
+	// Damage per second.
+	ReportRankingMetricTypeDps ReportRankingMetricType = "dps"
+	// Healing per second.
+	ReportRankingMetricTypeHps ReportRankingMetricType = "hps"
+	// Survivability ranking for tanks. Deprecated. Only supported for some older WoW zones.
+	ReportRankingMetricTypeKrsi ReportRankingMetricType = "krsi"
+	// Score. Used by WoW Mythic dungeons and by ESO trials.
+	ReportRankingMetricTypePlayerscore ReportRankingMetricType = "playerscore"
+	// Speed. Not supported by every zone.
+	ReportRankingMetricTypePlayerspeed ReportRankingMetricType = "playerspeed"
+	// cDPS is unique to FFXIV and is damage done adjusted for raid-contributing buffs and debuffs.
+	ReportRankingMetricTypeCdps ReportRankingMetricType = "cdps"
+	// nDPS is unique to FFXIV and is damage done adjusted for raid-contributing buffs and debuffs.
+	ReportRankingMetricTypeNdps ReportRankingMetricType = "ndps"
+	// rDPS is unique to FFXIV and is damage done adjusted for raid-contributing buffs and debuffs.
+	ReportRankingMetricTypeRdps ReportRankingMetricType = "rdps"
+	// Healing done per second to tanks.
+	ReportRankingMetricTypeTankhps ReportRankingMetricType = "tankhps"
+	// Weighted damage per second. Unique to WoW currently. Used to remove pad damage and reward damage done to high priority targets.
+	ReportRankingMetricTypeWdps ReportRankingMetricType = "wdps"
+)
+
+var AllReportRankingMetricType = []ReportRankingMetricType{
+	ReportRankingMetricTypeBosscdps,
+	ReportRankingMetricTypeBossdps,
+	ReportRankingMetricTypeBossndps,
+	ReportRankingMetricTypeBossrdps,
+	ReportRankingMetricTypeDefault,
+	ReportRankingMetricTypeDps,
+	ReportRankingMetricTypeHps,
+	ReportRankingMetricTypeKrsi,
+	ReportRankingMetricTypePlayerscore,
+	ReportRankingMetricTypePlayerspeed,
+	ReportRankingMetricTypeCdps,
+	ReportRankingMetricTypeNdps,
+	ReportRankingMetricTypeRdps,
+	ReportRankingMetricTypeTankhps,
+	ReportRankingMetricTypeWdps,
+}
+
+func (e ReportRankingMetricType) IsValid() bool {
+	switch e {
+	case ReportRankingMetricTypeBosscdps, ReportRankingMetricTypeBossdps, ReportRankingMetricTypeBossndps, ReportRankingMetricTypeBossrdps, ReportRankingMetricTypeDefault, ReportRankingMetricTypeDps, ReportRankingMetricTypeHps, ReportRankingMetricTypeKrsi, ReportRankingMetricTypePlayerscore, ReportRankingMetricTypePlayerspeed, ReportRankingMetricTypeCdps, ReportRankingMetricTypeNdps, ReportRankingMetricTypeRdps, ReportRankingMetricTypeTankhps, ReportRankingMetricTypeWdps:
+		return true
+	}
+	return false
+}
+
+func (e ReportRankingMetricType) String() string {
+	return string(e)
+}
+
+func (e *ReportRankingMetricType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ReportRankingMetricType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ReportRankingMetricType", str)
+	}
+	return nil
+}
+
+func (e ReportRankingMetricType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ReportRankingMetricType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ReportRankingMetricType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Used to specify a tank, healer or DPS role.
+type RoleType string
+
+const (
+	// Fetch any role..
+	RoleTypeAny RoleType = "Any"
+	// Fetch the DPS role only.
+	RoleTypeDps RoleType = "DPS"
+	// Fetch the healer role only.
+	RoleTypeHealer RoleType = "Healer"
+	// Fetch the tanking role only.
+	RoleTypeTank RoleType = "Tank"
+)
+
+var AllRoleType = []RoleType{
+	RoleTypeAny,
+	RoleTypeDps,
+	RoleTypeHealer,
+	RoleTypeTank,
+}
+
+func (e RoleType) IsValid() bool {
+	switch e {
+	case RoleTypeAny, RoleTypeDps, RoleTypeHealer, RoleTypeTank:
+		return true
+	}
+	return false
+}
+
+func (e RoleType) String() string {
+	return string(e)
+}
+
+func (e *RoleType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RoleType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RoleType", str)
+	}
+	return nil
+}
+
+func (e RoleType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RoleType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RoleType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The type of Subscription.
+type SubscriptionStatus string
+
+const (
+	// Silver Tier subscription
+	SubscriptionStatusSilver SubscriptionStatus = "Silver"
+	// Gold Tier subscription
+	SubscriptionStatusGold SubscriptionStatus = "Gold"
+	// Platinum Tier subscription
+	SubscriptionStatusPlatinum SubscriptionStatus = "Platinum"
+	// Legacy Silver Tier subscription
+	SubscriptionStatusLegacySilver SubscriptionStatus = "LegacySilver"
+	// Legacy Gold Tier subscription
+	SubscriptionStatusLegacyGold SubscriptionStatus = "LegacyGold"
+	// Legacy Platinum Tier subscription
+	SubscriptionStatusLegacyPlatinum SubscriptionStatus = "LegacyPlatinum"
+	// Alchemical Society Tier subscription
+	SubscriptionStatusAlchemicalSociety SubscriptionStatus = "AlchemicalSociety"
+)
+
+var AllSubscriptionStatus = []SubscriptionStatus{
+	SubscriptionStatusSilver,
+	SubscriptionStatusGold,
+	SubscriptionStatusPlatinum,
+	SubscriptionStatusLegacySilver,
+	SubscriptionStatusLegacyGold,
+	SubscriptionStatusLegacyPlatinum,
+	SubscriptionStatusAlchemicalSociety,
+}
+
+func (e SubscriptionStatus) IsValid() bool {
+	switch e {
+	case SubscriptionStatusSilver, SubscriptionStatusGold, SubscriptionStatusPlatinum, SubscriptionStatusLegacySilver, SubscriptionStatusLegacyGold, SubscriptionStatusLegacyPlatinum, SubscriptionStatusAlchemicalSociety:
+		return true
+	}
+	return false
+}
+
+func (e SubscriptionStatus) String() string {
+	return string(e)
+}
+
+func (e *SubscriptionStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SubscriptionStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SubscriptionStatus", str)
+	}
+	return nil
+}
+
+func (e SubscriptionStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SubscriptionStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SubscriptionStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The type of table to examine.
+type TableDataType string
+
+const (
+	// Summary Overview
+	TableDataTypeSummary TableDataType = "Summary"
+	// Buffs.
+	TableDataTypeBuffs TableDataType = "Buffs"
+	// Casts.
+	TableDataTypeCasts TableDataType = "Casts"
+	// Damage done.
+	TableDataTypeDamageDone TableDataType = "DamageDone"
+	// Damage taken.
+	TableDataTypeDamageTaken TableDataType = "DamageTaken"
+	// Deaths.
+	TableDataTypeDeaths TableDataType = "Deaths"
+	// Debuffs.
+	TableDataTypeDebuffs TableDataType = "Debuffs"
+	// Dispels.
+	TableDataTypeDispels TableDataType = "Dispels"
+	// Healing done.
+	TableDataTypeHealing TableDataType = "Healing"
+	// Interrupts.
+	TableDataTypeInterrupts TableDataType = "Interrupts"
+	// Resources.
+	TableDataTypeResources TableDataType = "Resources"
+	// Summons
+	TableDataTypeSummons TableDataType = "Summons"
+	// Survivability (death info across multiple pulls).
+	TableDataTypeSurvivability TableDataType = "Survivability"
+	// Threat.
+	TableDataTypeThreat TableDataType = "Threat"
+)
+
+var AllTableDataType = []TableDataType{
+	TableDataTypeSummary,
+	TableDataTypeBuffs,
+	TableDataTypeCasts,
+	TableDataTypeDamageDone,
+	TableDataTypeDamageTaken,
+	TableDataTypeDeaths,
+	TableDataTypeDebuffs,
+	TableDataTypeDispels,
+	TableDataTypeHealing,
+	TableDataTypeInterrupts,
+	TableDataTypeResources,
+	TableDataTypeSummons,
+	TableDataTypeSurvivability,
+	TableDataTypeThreat,
+}
+
+func (e TableDataType) IsValid() bool {
+	switch e {
+	case TableDataTypeSummary, TableDataTypeBuffs, TableDataTypeCasts, TableDataTypeDamageDone, TableDataTypeDamageTaken, TableDataTypeDeaths, TableDataTypeDebuffs, TableDataTypeDispels, TableDataTypeHealing, TableDataTypeInterrupts, TableDataTypeResources, TableDataTypeSummons, TableDataTypeSurvivability, TableDataTypeThreat:
+		return true
+	}
+	return false
+}
+
+func (e TableDataType) String() string {
+	return string(e)
+}
+
+func (e *TableDataType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TableDataType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TableDataType", str)
+	}
+	return nil
+}
+
+func (e TableDataType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *TableDataType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e TableDataType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether the view is by source, target, or ability.
+type ViewType string
+
+const (
+	// Use the same default that the web site picks based off the other selected parameters.
+	ViewTypeDefault ViewType = "Default"
+	// View by ability.
+	ViewTypeAbility ViewType = "Ability"
+	// View. by source.
+	ViewTypeSource ViewType = "Source"
+	// View by target.
+	ViewTypeTarget ViewType = "Target"
+)
+
+var AllViewType = []ViewType{
+	ViewTypeDefault,
+	ViewTypeAbility,
+	ViewTypeSource,
+	ViewTypeTarget,
+}
+
+func (e ViewType) IsValid() bool {
+	switch e {
+	case ViewTypeDefault, ViewTypeAbility, ViewTypeSource, ViewTypeTarget:
+		return true
+	}
+	return false
+}
+
+func (e ViewType) String() string {
+	return string(e)
+}
+
+func (e *ViewType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ViewType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ViewType", str)
+	}
+	return nil
+}
+
+func (e ViewType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ViewType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ViewType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
