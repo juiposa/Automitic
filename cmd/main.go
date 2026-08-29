@@ -5,6 +5,7 @@ import (
 	"github.com/juiposa/Automitic/internal/config"
 	"github.com/juiposa/Automitic/internal/fflogs"
 	"github.com/juiposa/Automitic/internal/logmanager"
+	"github.com/juiposa/Automitic/internal/timeliner"
 )
 
 func main() {
@@ -15,7 +16,8 @@ func main() {
 	fflogsClient := fflogs.NewFFLogsClient(cfg)
 	cacheManager := cache.NewCacheManager(cfg)
 	loader := logmanager.NewLogLoader(cfg, fflogsClient, cacheManager)
-	_, err = loader.LoadLogs("fpMxRBFWPgDXKCkA", 8)
+	timeliner := timeliner.NewTimeliner(cfg, loader)
+	_, err = timeliner.BuildTimeline("fpMxRBFWPgDXKCkA", 8)
 	if err != nil {
 		panic(err)
 	}

@@ -2,31 +2,34 @@ package fflogs
 
 type Event struct {
 	//Meta
-	PacketID  int   `json:"packetID,omitempty"`
-	Fight     int   `json:"fight,omitempty"`
-	Timestamp int64 `json:"timestamp,omitempty"`
+	PacketID  int64   `json:"packetID,omitempty"`
+	Fight     int64   `json:"fight,omitempty"`
+	Timestamp float64 `json:"timestamp,omitempty"`
 
 	//Actors
-	SourceID       int `json:"sourceID,omitempty"`
-	TargetID       int `json:"targetID,omitempty"`
-	SourceInstance int `json:"sourceInstance,omitempty"`
-	AbilityGameID  int `json:"abilityGameID,omitempty"`
+	SourceID       int64 `json:"sourceID,omitempty"`
+	TargetID       int64 `json:"targetID,omitempty"`
+	SourceInstance int64 `json:"sourceInstance,omitempty"`
+	AbilityGameID  int64 `json:"abilityGameID,omitempty"`
+
+	//Cast
+	Duration int64 `json:"duration,omitempty"`
 
 	//Damage
 	Type    string `json:"type,omitempty"`
-	HitType int    `json:"hitType,omitempty"`
+	HitType int64  `json:"hitType,omitempty"`
 
-	UnmitigatedAmount int `json:"unmitigatedAmount,omitempty"`
+	UnmitigatedAmount int64 `json:"unmitigatedAmount,omitempty"`
 
-	Mitigated  int     `json:"mitigated,omitempty"`
-	Blocked    int     `json:"blocked,omitempty"`
-	Absorbed   int     `json:"absorbed,omitempty"`
+	Mitigated  int64   `json:"mitigated,omitempty"`
+	Blocked    int64   `json:"blocked,omitempty"`
+	Absorbed   int64   `json:"absorbed,omitempty"`
 	Multiplier float64 `json:"multiplier,omitempty"`
 
-	Amount int `json:"amount,omitempty"`
+	Amount int64 `json:"amount,omitempty"`
 
 	//Death Events
-	Overkill int `json:"overkill,omitempty"`
+	Overkill int64 `json:"overkill,omitempty"`
 
 	//Stupid shit
 	Gear                 []any   `json:"gear,omitempty"`
@@ -37,7 +40,7 @@ type Event struct {
 	Strength             any     `json:"strength,omitempty"`
 	Dexterity            any     `json:"dexterity,omitempty"`
 	Vitality             any     `json:"vitality,omitempty"`
-	Intelligence         any     `json:"intelligence,omitempty"`
+	int64elligence       any     `json:"int64elligence,omitempty"`
 	Mind                 any     `json:"mind,omitempty"`
 	Piety                any     `json:"piety,omitempty"`
 	Attack               any     `json:"attack,omitempty"`
@@ -58,7 +61,6 @@ type Event struct {
 	TargetInstance       any     `json:"targetInstance,omitempty"`
 	Unpaired             any     `json:"unpaired,omitempty"`
 	ExtraAbilityGameID   any     `json:"extraAbilityGameID,omitempty"`
-	Duration             any     `json:"duration,omitempty"`
 	Overheal             any     `json:"overheal,omitempty"`
 	Absorb               any     `json:"absorb,omitempty"`
 	Value                any     `json:"value,omitempty"`

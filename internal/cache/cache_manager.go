@@ -96,6 +96,6 @@ func (c *cacheManager) saveToFile(filename string, fileContents []byte) error {
 	return os.WriteFile(filename, fileContents, 0644)
 }
 
-func (c *cacheManager) soadFromFile(filename string) ([]byte, error) {
+func (c *cacheManager) loadFromFile(filename string) ([]byte, error) {
 	return os.ReadFile(filename)
 }
