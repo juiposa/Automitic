@@ -1,4 +1,4 @@
-package model
+package actors
 
 type Job string
 

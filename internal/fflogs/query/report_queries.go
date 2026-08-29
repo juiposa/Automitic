@@ -9,6 +9,14 @@ query($reportId: String) {
                 startTime
                 endTime
                 friendlyPlayers
+				friendlyPets {
+					id
+					gameID
+				}
+				enemyNPCs {
+					id
+					gameID
+				}
             }
         }
     }

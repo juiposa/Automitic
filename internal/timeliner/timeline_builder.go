@@ -2,6 +2,7 @@ package timeliner
 
 import (
 	"github.com/juiposa/Automitic/internal/fflogs"
+	"github.com/juiposa/Automitic/internal/logmanager"
 	"github.com/juiposa/Automitic/internal/model"
 )
 
@@ -34,12 +35,26 @@ removebuff
 absorbed
 */
 
-func BuildTimeline() model.Timeline {
-	//report := logloader.LoadLogs()
-	//events := report.Events.Data
-	//compactedTimeline := CompactTimeline(events)
-	//println(compactedTimeline)
-	return model.Timeline{}
+type Timeliner interface {
+	BuildTimeline(reportId string, fightNumber int) (model.Timeline, error)
+}
+
+type timeliner struct {
+	logManager logmanager.LogManager
+}
+
+func NewTimeliner(logManager logmanager.LogManager) Timeliner {
+	return &timeliner{
+		logManager: logManager,
+	}
+}
+
+func (t *timeliner) BuildTimeline(reportId string, fightNumber int) (model.Timeline, error) {
+	_, err := t.logManager.LoadLogs(reportId, fightNumber)
+	if err != nil {
+		return model.Timeline{}, err
+	}
+	return model.Timeline{}, nil
 }
 
 func CompactTimeline(events []fflogs.Event) map[int64][]fflogs.Event {

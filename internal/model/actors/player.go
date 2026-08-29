@@ -1,8 +1,10 @@
-package model
+package actors
 
 type PlayerCharacter struct {
-	Name string
-	Job  Job
+	ID     int64 `json:"id"`
+	GameID float64
+	Name   string
+	Job    Job
 }
 
 type PlayerState struct {
@@ -10,4 +12,7 @@ type PlayerState struct {
 	CurrentHealth int
 	CurrentMana   int
 	Resources     map[string]int
+}
+
+type Pet struct {
 }

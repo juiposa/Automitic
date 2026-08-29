@@ -10,7 +10,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-type FFLogsGQL interface {
+type GQL interface {
 	GetReportMetadata(reportId string) (*ReportMasterData, error)
 	GetReportFights(reportId string) ([]*ReportFight, error)
 	GetFightPlayers(reportId string, fightNumber int) (any, error) //TODO player object
@@ -21,13 +21,13 @@ type fflogsClient struct {
 	v2 *clientv2.Client
 }
 
-func NewClient(cli clientv2.HttpClient, baseURL string, options *clientv2.Options, interceptors ...clientv2.RequestInterceptor) FFLogsGQL {
+func NewClient(cli clientv2.HttpClient, baseURL string, options *clientv2.Options, interceptors ...clientv2.RequestInterceptor) GQL {
 	return &fflogsClient{
 		v2: clientv2.NewClient(cli, baseURL, options, interceptors...),
 	}
 }
 
-func NewFFLogsClient(cfg *config.Config) FFLogsGQL {
+func NewFFLogsClient(cfg *config.Config) GQL {
 	ctx := context.Background()
 	clientCfg := clientcredentials.Config{
 		ClientID:     cfg.FFLogsClientID,
