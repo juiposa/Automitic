@@ -2,9 +2,11 @@ package timeliner
 
 import (
 	"slices"
+	"time"
 
 	"github.com/juiposa/Automitic/internal/config"
 	"github.com/juiposa/Automitic/internal/fflogs"
+	"github.com/juiposa/Automitic/internal/log"
 	"github.com/juiposa/Automitic/internal/logmanager"
 	"github.com/juiposa/Automitic/internal/model"
 )
@@ -43,19 +45,21 @@ type Timeliner interface {
 }
 
 type timeliner struct {
-	logManager         logmanager.LogManager
-	acceptedEventTypes []RawEventType
+	logManager           logmanager.LogManager
+	acceptedBossEvents   []fflogs.RawEventType
+	acceptedPlayerEvents []fflogs.RawEventType
 }
 
 func NewTimeliner(cfg *config.Config, logManager logmanager.LogManager) Timeliner {
 	return &timeliner{
 		logManager: logManager,
-		acceptedEventTypes: []RawEventType{
-			BeginCast,
-			Cast,
-			CalculatedDamage,
-			Damage,
+		acceptedBossEvents: []fflogs.RawEventType{
+			fflogs.BeginCast,
+			fflogs.Cast,
+			fflogs.CalculatedDamage,
+			fflogs.Damage,
 		},
+		acceptedPlayerEvents: []fflogs.RawEventType{},
 	}
 }
 
@@ -71,25 +75,50 @@ func (t *timeliner) BuildTimeline(reportId string, fightNumber int) (model.Timel
 		RawEvents: events,
 	}
 	rawTimeline.CompactTimeline()
-	return model.Timeline{}, nil
+	timeline := model.Timeline{
+		Timestamp:   time.UnixMilli(int64(fight.StartTime)),
+		PullTime:    time.Duration(int64(fight.EndTime-fight.StartTime)) * time.Millisecond,
+		Actors:      fight.Actors,
+		FightNumber: fight.ID,
+		ReportID:    reportId,
+	}
+	for len(rawTimeline.Sequence) > 0 {
+		event := rawTimeline.PopTimelineEvent()
+		if event != nil {
+			timeline.Events = append(timeline.Events, event)
+		}
+	}
+	return timeline, nil
 }
 
 func (t *timeliner) FilterEvents(fight model.Fight) []fflogs.Event {
 	var returnList []fflogs.Event
-	bossIDs := t.GetBossIDs(fight)
+	bossIDs, playerIDs := t.GetEntityIDs(fight)
 	for _, event := range fight.Events {
-		if slices.Contains(t.acceptedEventTypes, RawEventType(event.Type)) &&
-			slices.Contains(bossIDs, event.SourceID) {
+		if t.IsAcceptedEvent(event, bossIDs, playerIDs) {
 			returnList = append(returnList, event)
 		}
 	}
 	return returnList
 }
 
-func (t *timeliner) GetBossIDs(fight model.Fight) []int64 {
-	var returnList []int64
+func (t *timeliner) IsAcceptedEvent(event fflogs.Event, bossIDs, playerIDs []int64) bool {
+	result := (slices.Contains(t.acceptedBossEvents, event.Type) &&
+		slices.Contains(bossIDs, event.SourceID)) ||
+		(slices.Contains(t.acceptedPlayerEvents, event.Type) &&
+			slices.Contains(playerIDs, event.SourceID))
+	log.Debug("ISACCEPTED", "result", result, "source", event.SourceID, "type", event.Type, "boss", bossIDs, "player", playerIDs)
+	return result
+}
+
+func (t *timeliner) GetEntityIDs(fight model.Fight) ([]int64, []int64) {
+	var bossList []int64
 	for _, bossActor := range fight.Actors.Bosses {
-		returnList = append(returnList, bossActor.ID)
+		bossList = append(bossList, bossActor.ID)
 	}
-	return returnList
+	var playerList []int64
+	for _, playerActor := range fight.Actors.Players {
+		playerList = append(playerList, playerActor.ID)
+	}
+	return bossList, playerList
 }

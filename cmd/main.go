@@ -8,6 +8,8 @@ import (
 	"github.com/juiposa/Automitic/internal/timeliner"
 )
 
+const ReportID = "fpMxRBFWPgDXKCkA"
+
 func main() {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -16,8 +18,12 @@ func main() {
 	fflogsClient := fflogs.NewFFLogsClient(cfg)
 	cacheManager := cache.NewCacheManager(cfg)
 	loader := logmanager.NewLogLoader(cfg, fflogsClient, cacheManager)
-	timeliner := timeliner.NewTimeliner(cfg, loader)
-	_, err = timeliner.BuildTimeline("fpMxRBFWPgDXKCkA", 8)
+	tlbuild := timeliner.NewTimeliner(cfg, loader)
+	timeline, err := tlbuild.BuildTimeline(ReportID, 8)
+	if err != nil {
+		panic(err)
+	}
+	err = cacheManager.SaveResult(ReportID, 8, timeline)
 	if err != nil {
 		panic(err)
 	}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/juiposa/Automitic/internal/config"
 	"github.com/juiposa/Automitic/internal/fflogs"
@@ -17,6 +18,8 @@ type CacheManager interface {
 
 	LoadFightEvents(reportId string, fightNumber int) (model.Fight, error)
 	LoadReport(reportId string) (fflogs.Report, error)
+
+	SaveResult(reportId string, fightNumber int, timeline model.Timeline) error
 }
 
 type cacheManager struct {
@@ -25,6 +28,10 @@ type cacheManager struct {
 
 const FightEventsFilename = "fight_events.json"
 const ReportFilename = "report.json"
+
+const ResultFileName = "result-%s-%s.json"
+
+const DateFormat = "2006-01-02T15-04-05"
 
 func NewCacheManager(cfg *config.Config) CacheManager {
 	return &cacheManager{
@@ -52,7 +59,7 @@ func (c *cacheManager) SaveReport(reportId string, report fflogs.Report) error {
 
 func (c *cacheManager) SaveFightEvents(reportId string, fightNumber int, fight model.Fight) error {
 	filename := c.getFightDir(reportId, fightNumber) + "/" + FightEventsFilename
-	contents, err := json.Marshal(fight)
+	contents, err := json.MarshalIndent(fight, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -82,6 +89,15 @@ func (c *cacheManager) LoadReport(reportId string) (fflogs.Report, error) {
 		return fflogs.Report{}, err
 	}
 	return report, nil
+}
+
+func (c *cacheManager) SaveResult(reportId string, fightNumber int, timeline model.Timeline) error {
+	filename := c.getFightDir(reportId, fightNumber) + "/" + fmt.Sprintf(ResultFileName, reportId, time.Now().Format(DateFormat))
+	contents, err := json.MarshalIndent(timeline, "", "  ")
+	if err != nil {
+		return err
+	}
+	return c.saveToFile(filename, contents)
 }
 
 func (c *cacheManager) getLogDir(reportId string) string {

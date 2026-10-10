@@ -2,19 +2,29 @@ package timeliner
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/juiposa/Automitic/internal/fflogs"
+	"github.com/juiposa/Automitic/internal/model"
 )
 
 type RawTimeline struct {
-	StartTime             float64
-	EndTime               float64
-	Sequence              []float64
-	CurrentTimestampIndex int
-	RawEvents             []fflogs.Event
-	TimeseriesEvents      map[float64][]fflogs.Event
+	StartTime        float64
+	EndTime          float64
+	Sequence         []float64
+	RawEvents        []fflogs.Event
+	TimeseriesEvents map[float64][]fflogs.Event
 }
+
+/* Heuristics
+A) Different RawEventTypes will never happen on the same exact timestamp, the game server processes each event sequentially.
+B) Thusly we only need to check the first element of a timestamp's events to determine type.
+C) Every `damage` or `heal` event for a given cast will always happen on the exact same timestamp.
+D) Once a root event type (Begin, Cast, etc.) finds it's first related event, it should know how to determine it's ended.
+   - If `damage`, once it finds a `calculateddamage` for each or a death, that completes the event.
+   - If `heal`, once it finds a `calculatedheal` and/or `absorbed` for each or a death, that completes the event.
+*/
 
 // CompactTimeline - map events by timestamp, record the sequence of timestamps
 func (t *RawTimeline) CompactTimeline() {
@@ -27,14 +37,23 @@ func (t *RawTimeline) CompactTimeline() {
 		}
 		compactedTimeline[event.Timestamp] = append(compactedTimeline[event.Timestamp], event)
 	}
-	t.CurrentTimestampIndex = 0
 	t.TimeseriesEvents = compactedTimeline
 }
 
-// PopTimelineEvent - scan the timeseries and create a TimelineEvent, removing the raw events processed from the timeseries
-func (t *RawTimeline) PopTimelineEvent() []fflogs.Event {
-	//tIndex := t.CurrentTimestampIndex
-	return []fflogs.Event{}
+// PopTimelineEvent - scan the timeseries and create a TimelineEvent, advance sequence
+func (t *RawTimeline) PopTimelineEvent() *model.TimelineEvent {
+	var currTimestamp float64
+	currTimestamp, t.Sequence = t.Sequence[0], t.Sequence[1:]
+	tEvents := t.TimeseriesEvents[currTimestamp]
+	if len(tEvents) == 0 || !slices.Contains(fflogs.RootEventTypes, tEvents[0].Type) { //check if time timestamp is a list of root events
+		return nil
+	}
+	timelineEvent := InitEvent(tEvents[0]) //init the event from the first element
+	for _, event := range tEvents {
+		FillInEvent(event, &timelineEvent)
+		t.GetNextEventInSequence(event, t.Sequence, &timelineEvent) // traverse each root event and scan for it's downstreams
+	}
+	return &timelineEvent
 }
 
 func (t *RawTimeline) GetTimestamp(timestamp float64) string {

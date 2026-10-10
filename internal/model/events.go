@@ -13,16 +13,16 @@ type Event struct {
 	PrePlayerState []actors.PlayerState
 }
 
-type DamageEvent struct {
-	AbilityId         int
-	UnmitigatedAmount int
-	Crit              bool // hitType == 2
+type DamageToTarget struct {
+	TargetID          int64
+	UnmitigatedAmount int64
+	//Crit              bool // hitType == 2
 
-	MitPresent           []Mitigation
+	//MitPresent           []Mitigation
 	TotalMultiplier      float64
-	TotalAmountMitigated int
+	TotalAmountMitigated int64
 
-	FinalAmount int
+	FinalAmount int64
 }
 
 type MitigationType string

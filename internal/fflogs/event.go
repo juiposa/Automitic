@@ -2,9 +2,10 @@ package fflogs
 
 type Event struct {
 	//Meta
-	PacketID  int64   `json:"packetID,omitempty"`
-	Fight     int64   `json:"fight,omitempty"`
-	Timestamp float64 `json:"timestamp,omitempty"`
+	PacketID  int64        `json:"packetID,omitempty"`
+	Fight     int64        `json:"fight,omitempty"`
+	Timestamp float64      `json:"timestamp,omitempty"`
+	Type      RawEventType `json:"type,omitempty"`
 
 	//Actors
 	SourceID       int64 `json:"sourceID,omitempty"`
@@ -16,8 +17,7 @@ type Event struct {
 	Duration int64 `json:"duration,omitempty"`
 
 	//Damage
-	Type    string `json:"type,omitempty"`
-	HitType int64  `json:"hitType,omitempty"`
+	HitType int64 `json:"hitType,omitempty"`
 
 	UnmitigatedAmount int64 `json:"unmitigatedAmount,omitempty"`
 
@@ -40,7 +40,7 @@ type Event struct {
 	Strength             any     `json:"strength,omitempty"`
 	Dexterity            any     `json:"dexterity,omitempty"`
 	Vitality             any     `json:"vitality,omitempty"`
-	int64elligence       any     `json:"int64elligence,omitempty"`
+	Intelligence         any     `json:"intelligence,omitempty"`
 	Mind                 any     `json:"mind,omitempty"`
 	Piety                any     `json:"piety,omitempty"`
 	Attack               any     `json:"attack,omitempty"`
