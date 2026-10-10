@@ -11,7 +11,7 @@ func (t *RawTimeline) GetNextEventInSequence(parentEvent fflogs.Event, sequenceS
 		events := t.TimeseriesEvents[timestamp]
 		if t.IsSameCast(parentEvent, events[0]) && t.IsSameTarget(parentEvent, events[0]) && fflogs.IsFollowingEventType(parentEvent.Type, events[0].Type) { // this is a timestamp that follows our cast
 			for _, event := range events {
-				FillInEvent(event, timelineEvent)
+				t.FillInEvent(event, timelineEvent)
 				t.GetNextEventInSequence(event, sequenceSlice[index:], timelineEvent)
 			}
 			break
@@ -26,4 +26,8 @@ func (t *RawTimeline) IsSameTarget(parentEvent fflogs.Event, event fflogs.Event)
 
 func (t *RawTimeline) IsSameCast(parentEvent fflogs.Event, event fflogs.Event) bool {
 	return parentEvent.AbilityGameID == event.AbilityGameID && parentEvent.SourceID == event.SourceID
+}
+
+func (t *RawTimeline) TimeInSeconds(time float64) float64 {
+	return time / 1000
 }

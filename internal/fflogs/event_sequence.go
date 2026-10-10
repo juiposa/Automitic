@@ -4,6 +4,7 @@ import "slices"
 
 var (
 	RootEventTypes = []RawEventType{
+		BeginCast,
 		Cast,
 	}
 	EventSequence = map[RawEventType][]RawEventType{

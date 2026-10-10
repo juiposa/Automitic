@@ -41,4 +41,5 @@ const (
 	LimitBreakUpdate    = RawEventType("limitbreakupdate")
 	Tether              = RawEventType("tether")
 	GaugeUpdate         = RawEventType("gaugeupdate")
+	MapChange           = RawEventType("mapchange")
 )

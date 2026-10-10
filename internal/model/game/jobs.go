@@ -1,4 +1,4 @@
-package jobs
+package game
 
 import "github.com/juiposa/Automitic/internal/model/actors"
 

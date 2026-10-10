@@ -1,4 +1,4 @@
-package ability
+package game
 
 type AbilitySource string
 
@@ -19,6 +19,7 @@ const (
 type Ability struct {
 	Id            int `json:"id"`
 	Name          string
+	GameAction    Action
 	AbilitySource `json:"ability_source"`
 	AbilityType   `json:"ability_type"`
 }

@@ -4,25 +4,30 @@ import (
 	"slices"
 
 	"github.com/juiposa/Automitic/internal/fflogs"
-	"github.com/juiposa/Automitic/internal/gamedata/jobs"
 	"github.com/juiposa/Automitic/internal/model/actors"
+	"github.com/juiposa/Automitic/internal/model/game"
 )
 
 func GetFightActors(actorsList []*fflogs.ReportActor, fight *fflogs.ReportFight) actors.FightActors {
-	fightActors := actors.FightActors{}
+	fightActors := actors.FightActors{
+		Players: make(map[int64]actors.PlayerCharacter),
+		Bosses:  make(map[int64]actors.Enemy),
+		Adds:    make(map[int64]actors.Enemy),
+	}
 	actorIDs := GetActorIDs(fight)
+
 	for _, actor := range actorsList {
 		if !slices.Contains(actorIDs, *actor.ID) { //ignore all report actors not present in this specific pull
 			continue
 		}
 		switch *actor.Type {
 		case actors.ActorTypePlayer:
-			fightActors.Players = append(fightActors.Players, MakePlayerActor(actor))
+			fightActors.Players[*actor.ID] = MakePlayerActor(actor)
 		case actors.ActorTypeNPC:
 			if *actor.SubType == actors.ActorSubTypeBoss {
-				fightActors.Bosses = append(fightActors.Bosses, MakeEnemyActor(actor))
+				fightActors.Bosses[*actor.ID] = MakeEnemyActor(actor)
 			} else if *actor.SubType == actors.ActorSubtypeNPC { // Adds might not always be NPC/NPC, idk
-				fightActors.Adds = append(fightActors.Adds, MakeEnemyActor(actor))
+				fightActors.Adds[*actor.ID] = MakeEnemyActor(actor)
 			}
 		}
 	}
@@ -48,7 +53,7 @@ func MakePlayerActor(actor *fflogs.ReportActor) actors.PlayerCharacter {
 		ID:     *actor.ID,
 		GameID: *actor.GameID,
 		Name:   *actor.Name,
-		Job:    jobs.GetJobType(*actor.SubType),
+		Job:    game.GetJobType(*actor.SubType),
 	}
 }
 

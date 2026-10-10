@@ -1,8 +1,8 @@
 package logmanager
 
 import (
-	"github.com/juiposa/Automitic/internal/cache"
 	"github.com/juiposa/Automitic/internal/config"
+	"github.com/juiposa/Automitic/internal/data"
 	"github.com/juiposa/Automitic/internal/fflogs"
 	"github.com/juiposa/Automitic/internal/model"
 )
@@ -17,13 +17,13 @@ type LogManager interface {
 }
 
 type logManager struct {
-	gql   fflogs.GQL
-	cache cache.CacheManager
+	gql  fflogs.GQL
+	data data.DataManager
 }
 
-func NewLogLoader(cfg *config.Config, gql fflogs.GQL, cacheManager cache.CacheManager) LogManager {
+func NewLogLoader(cfg *config.Config, gql fflogs.GQL, dataManager data.DataManager) LogManager {
 	return &logManager{
-		gql:   gql,
-		cache: cacheManager,
+		gql:  gql,
+		data: dataManager,
 	}
 }

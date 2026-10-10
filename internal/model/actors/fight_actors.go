@@ -14,7 +14,7 @@ const (
 )
 
 type FightActors struct {
-	Players []PlayerCharacter `json:"players"`
-	Bosses  []Enemy           `json:"bosses"`
-	Adds    []Enemy           `json:"adds"`
+	Players map[int64]PlayerCharacter `json:"players"`
+	Bosses  map[int64]Enemy           `json:"bosses"`
+	Adds    map[int64]Enemy           `json:"adds"`
 }

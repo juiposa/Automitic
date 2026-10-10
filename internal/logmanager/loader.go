@@ -5,7 +5,7 @@ import (
 )
 
 func (l *logManager) LoadLogs(reportId string, fightNumber int) (model.Fight, error) {
-	err := l.cache.InitCache(reportId, fightNumber)
+	err := l.data.InitCache(reportId, fightNumber)
 	if err != nil {
 		return model.Fight{}, err
 	}

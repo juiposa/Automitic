@@ -6,7 +6,7 @@ import (
 )
 
 func (l *logManager) LoadFight(reportId string, fightNumber int, report fflogs.Report) (model.Fight, error) {
-	fight, err := l.cache.LoadFightEvents(reportId, fightNumber)
+	fight, err := l.data.LoadFightEvents(reportId, fightNumber)
 	if err == nil { //was found in files
 		return fight, nil
 	} else {
@@ -21,7 +21,7 @@ func (l *logManager) LoadFight(reportId string, fightNumber int, report fflogs.R
 			Events:      fightEvents,
 			Actors:      GetFightActors(report.MasterData.Actors, fightMetadata),
 		}
-		err = l.cache.SaveFightEvents(reportId, fightNumber, returnFight)
+		err = l.data.SaveFightEvents(reportId, fightNumber, returnFight)
 		if err != nil {
 			return model.Fight{}, err
 		}

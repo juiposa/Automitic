@@ -1,0 +1,5 @@
+
+
+.PHONY: generate
+generate:
+	gqlgenc

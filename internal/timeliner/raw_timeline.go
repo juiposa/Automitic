@@ -7,6 +7,8 @@ import (
 
 	"github.com/juiposa/Automitic/internal/fflogs"
 	"github.com/juiposa/Automitic/internal/model"
+	"github.com/juiposa/Automitic/internal/model/actors"
+	"github.com/juiposa/Automitic/internal/model/game"
 )
 
 type RawTimeline struct {
@@ -15,6 +17,8 @@ type RawTimeline struct {
 	Sequence         []float64
 	RawEvents        []fflogs.Event
 	TimeseriesEvents map[float64][]fflogs.Event
+	Actions          map[int64]game.Action
+	Actors           actors.FightActors
 }
 
 /* Heuristics
@@ -45,13 +49,15 @@ func (t *RawTimeline) PopTimelineEvent() *model.TimelineEvent {
 	var currTimestamp float64
 	currTimestamp, t.Sequence = t.Sequence[0], t.Sequence[1:]
 	tEvents := t.TimeseriesEvents[currTimestamp]
-	if len(tEvents) == 0 || !slices.Contains(fflogs.RootEventTypes, tEvents[0].Type) { //check if time timestamp is a list of root events
+	if len(tEvents) == 0 || tEvents[0].Processed || (!slices.Contains(fflogs.RootEventTypes, tEvents[0].Type)) { //check if time timestamp is a list of root events and hasn't already been processed
 		return nil
 	}
-	timelineEvent := InitEvent(tEvents[0]) //init the event from the first element
+	timelineEvent := t.InitEvent(tEvents[0]) //init the event from the first element
 	for _, event := range tEvents {
-		FillInEvent(event, &timelineEvent)
-		t.GetNextEventInSequence(event, t.Sequence, &timelineEvent) // traverse each root event and scan for it's downstreams
+		if !event.Processed { //has been processed by a different sequence
+			t.FillInEvent(event, &timelineEvent)
+			t.GetNextEventInSequence(event, t.Sequence, &timelineEvent) // traverse each root event and scan for it's downstreams
+		}
 	}
 	return &timelineEvent
 }
@@ -62,5 +68,7 @@ func (t *RawTimeline) GetTimestamp(timestamp float64) string {
 	minutes := duration / time.Minute
 	duration -= minutes * time.Minute
 	seconds := duration / time.Second
-	return fmt.Sprintf("%02d:%02d", minutes, seconds)
+	duration -= seconds * time.Second
+	milliseconds := duration / time.Millisecond
+	return fmt.Sprintf("%02d:%02d.%03d", minutes, seconds, milliseconds)
 }

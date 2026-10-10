@@ -5,8 +5,8 @@ import (
 )
 
 func (l *logManager) LoadReport(reportId string, fightNumber int) (fflogs.Report, error) {
-	report, err := l.cache.LoadReport(reportId)
-	if err == nil { //was found in files
+	report, err := l.data.LoadReport(reportId)
+	if false { //was found in files
 		// TOOD break refresh into its own method
 		if len(report.Fights) < fightNumber { //missing the fight, fetch a fresh list
 			fights, err := l.gql.GetReportFights(reportId)
@@ -22,7 +22,7 @@ func (l *logManager) LoadReport(reportId string, fightNumber int) (fflogs.Report
 			return report, err
 		}
 	}
-	err = l.cache.SaveReport(reportId, report)
+	err = l.data.SaveReport(reportId, report)
 	if err != nil {
 		return report, err
 	}

@@ -14,7 +14,11 @@ type Event struct {
 }
 
 type DamageToTarget struct {
-	TargetID          int64
+	TargetID   int64
+	TargetName string
+
+	ApplicationDelta  float64
+	ApplicationTime   string
 	UnmitigatedAmount int64
 	//Crit              bool // hitType == 2
 

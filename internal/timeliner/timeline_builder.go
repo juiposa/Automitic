@@ -2,9 +2,9 @@ package timeliner
 
 import (
 	"slices"
-	"time"
 
 	"github.com/juiposa/Automitic/internal/config"
+	"github.com/juiposa/Automitic/internal/data"
 	"github.com/juiposa/Automitic/internal/fflogs"
 	"github.com/juiposa/Automitic/internal/log"
 	"github.com/juiposa/Automitic/internal/logmanager"
@@ -46,13 +46,15 @@ type Timeliner interface {
 
 type timeliner struct {
 	logManager           logmanager.LogManager
+	dataManager          data.DataManager
 	acceptedBossEvents   []fflogs.RawEventType
 	acceptedPlayerEvents []fflogs.RawEventType
 }
 
-func NewTimeliner(cfg *config.Config, logManager logmanager.LogManager) Timeliner {
+func NewTimeliner(cfg *config.Config, logManager logmanager.LogManager, dataManager data.DataManager) Timeliner {
 	return &timeliner{
-		logManager: logManager,
+		logManager:  logManager,
+		dataManager: dataManager,
 		acceptedBossEvents: []fflogs.RawEventType{
 			fflogs.BeginCast,
 			fflogs.Cast,
@@ -68,16 +70,21 @@ func (t *timeliner) BuildTimeline(reportId string, fightNumber int) (model.Timel
 	if err != nil {
 		return model.Timeline{}, err
 	}
+	actions, err := t.dataManager.GetActions()
+	if err != nil {
+		return model.Timeline{}, err
+	}
 	events := t.FilterEvents(fight)
 	rawTimeline := RawTimeline{
 		StartTime: fight.StartTime,
 		EndTime:   fight.EndTime,
 		RawEvents: events,
+		Actors:    fight.Actors,
+		Actions:   actions,
 	}
 	rawTimeline.CompactTimeline()
 	timeline := model.Timeline{
-		Timestamp:   time.UnixMilli(int64(fight.StartTime)),
-		PullTime:    time.Duration(int64(fight.EndTime-fight.StartTime)) * time.Millisecond,
+		PullTime:    rawTimeline.GetTimestamp(fight.EndTime),
 		Actors:      fight.Actors,
 		FightNumber: fight.ID,
 		ReportID:    reportId,

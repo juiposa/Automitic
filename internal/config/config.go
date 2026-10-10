@@ -8,6 +8,7 @@ type Config struct {
 	FFLogsClientSecret   string `envconfig:"AUTOMITIC_FFLOGS_CLIENT_SECRET"`
 	FFLogsAccessTokenURL string `envconfig:"AUTOMITIC_FFLOGS_ACCESS_TOKEN_URL"`
 	FightCacheLocation   string `envconfig:"AUTOMITIC_FIGHT_CACHE_LOCATION" default:"~/.automitic/cache"`
+	DataLocation         string `envconfig:"AUTOMITIC_DATA_LOCATION" default:"~/.automitic/data"` //TODO expand home directory
 }
 
 func LoadConfig() (*Config, error) {

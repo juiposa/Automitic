@@ -1,8 +1,8 @@
 model:
-  package: generated
+  package: fflogs
   filename: ./internal/fflogs/gql_model.go # https://github.com/99designs/gqlgen/tree/master/plugin/modelgen
 client:
-  package: generated
+  package: fflogs
   filename: ./internal/fflogs/gql_client.go
 models:
   Int:

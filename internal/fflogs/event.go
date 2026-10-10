@@ -6,6 +6,7 @@ type Event struct {
 	Fight     int64        `json:"fight,omitempty"`
 	Timestamp float64      `json:"timestamp,omitempty"`
 	Type      RawEventType `json:"type,omitempty"`
+	Processed bool         `json:"processed,omitempty"`
 
 	//Actors
 	SourceID       int64 `json:"sourceID,omitempty"`
@@ -30,6 +31,11 @@ type Event struct {
 
 	//Death Events
 	Overkill int64 `json:"overkill,omitempty"`
+
+	//Map Change
+	MapID   int64  `json:"mapID,omitempty"`
+	MapName string `json:"mapName,omitempty"`
+	MapFile string `json:"mapFile,omitempty"`
 
 	//Stupid shit
 	Gear                 []any   `json:"gear,omitempty"`
